@@ -154,12 +154,11 @@ class AIBeingBaseTask(object):
                     res, buffer = "", b""
                     async for chunk in response.content.iter_any():
                         buffer += chunk
-                        while b"\n" in buffer:
+                        if b"\n" in buffer:
                             line, buffer = buffer.split(b"\n", 1)
                             if len(line) == 0:
                                 continue
                             data_str = line.decode('utf-8')
-                            logger.info(f"data_str: {data_str}")
                             if data_str.__contains__("[DONE]"):
                                 return res
                             json_start = data_str.find('{')
