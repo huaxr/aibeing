@@ -47,10 +47,9 @@ analyze_conversation = """以下是AI的主题背景,以及AI和User的一段历
 
 def generate_analyze_prompt(dic: dict) -> str:
     content = []
-    content.append("1.用户潜在的意图:" + dic.get("user_intent", ""))
-    content.append("2.你该如何看待用户的回应:" + dic.get("ai_thought", ""))
-    content.append("3.会话实际的进展情况:" + dic.get("conversation_progress", ""))
-    content.append("4.根据用户的意图,促进会话进展的思路决策:" + dic.get("how_to_improve", ""))
-    content.append("5.你不能评判用户,不允许猜测用户有负面情绪,要积极带动话题")
-    content.append("6.如果有必要,可以参考语料库, 主题介绍中的内容, 请不要胡言乱语, 不要陷入对话僵局。")
+    content.append("用户的意图:" + dic.get("user_intent", ""))
+    content.append("如何看待当前对话:" + dic.get("ai_thought", ""))
+    content.append("当前对话进展情况:" + dic.get("conversation_progress", ""))
+    content.append("促进对话进展的思路:" + dic.get("how_to_improve", ""))
+    content.append("如果有必要,可以参考语料库,主题介绍中的内容, 打破对话僵局!")
     return "\n".join(content)
