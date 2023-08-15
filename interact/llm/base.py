@@ -154,6 +154,7 @@ class AIBeingBaseTask(object):
                     assert response.status == 200, f"proxy status code is: {response.status}"
                     res = ""
                     async for line in response.content.iter_any():
+                        logger.info(f"async_proxy response line: {line}")
                         data_str = line.decode('utf-8')
                         if data_str == "data: [DONE]":
                             return res
