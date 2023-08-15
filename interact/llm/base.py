@@ -153,7 +153,6 @@ class AIBeingBaseTask(object):
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"
                     res, buffer = "", b""
-                    await hook.on_llm_new_token("{")
                     async for chunk in response.content.iter_any():
                         buffer += chunk
                         while b"\n" in buffer:
@@ -161,6 +160,7 @@ class AIBeingBaseTask(object):
                             if len(line) == 0:
                                 continue
                             data_str = line.decode('utf-8')
+                            logger.info(f"streaming data: {data_str}")
                             if data_str.__contains__("[DONE]"):
                                 return res
                             json_start = data_str.find('{')
