@@ -2,7 +2,9 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import queue
+import sys
 import threading
+import traceback
 import uuid
 import asyncio
 
@@ -64,7 +66,9 @@ class WSServer(object):
                 elif isinstance(e, asyncio.CancelledError):
                     excepts = "async future task exception! %s" % (str(e))
                 else:
-                    excepts = "internal exception! %s" % (str(e))
+                    exc_type, exc_value, exc_traceback = sys.exc_info()
+                    traceback.print_tb(exc_traceback)
+                    excepts = f"internal exception! {exc_type.__name__}: {exc_value}"
                 logger.error(excepts)
                 await websocket.send(response(protocol=protocol.exception, debug=excepts).toStr())
 
