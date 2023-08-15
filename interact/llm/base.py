@@ -145,7 +145,6 @@ class AIBeingBaseTask(object):
             return res
 
     async def async_proxy(self, messages:List, hook:Union[BaseCallbackHandler,None], temperature:float=0.7, streaming:bool=False) -> str:
-        logger.info("async proxy execute now")
         assert len(messages) > 0, "messages length must > 0"
         headers, data = self.prepare_header_data(messages, streaming, temperature)
         async with aiohttp.ClientSession() as session:
@@ -159,12 +158,12 @@ class AIBeingBaseTask(object):
                             return res
                         json_start = data_str.find('{')
                         json_data = data_str[json_start:]
-                        logger.info(f"async_proxy response line: {json_data}")
+                        logger.info("xxxxxxxxxx: {json_data}")
                         parsed_data = json.loads(json_data)
-                        logger.info(f"xxxxxxxxxxxxx")
                         delta = parsed_data['choices'][0]['delta']
                         content = delta.get("content", None)
                         if content:
+                            logger.info(f"get content: {content}")
                             res += content
                             if hook:
                                 await hook.on_llm_new_token(content)
