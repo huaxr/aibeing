@@ -161,7 +161,6 @@ class AIBeingBaseTask(object):
                             if len(line) == 0:
                                 continue
                             data_str = line.decode('utf-8')
-                            logger.info(f"streaming data: {data_str}")
                             if data_str.__contains__("[DONE]"):
                                 return res
                             json_start = data_str.find('{')

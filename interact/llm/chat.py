@@ -88,16 +88,16 @@ class AIBeingChatTask(AIBeingBaseTask):
         start = time.time()
         contexts = await self.async_similarity(inputs, self.template.vec)
         self.chat_list[0] = self.get_system_template(self.template.get_prompt(), "\n".join(contexts), self._analyze_future_result, lang="cn")
-        # input_size = self.input_tokens()
+        input_size = self.input_tokens()
         chat_list = self.chat_list + [self.get_user_template(self.template.get_emotions(), inputs)]
         res = await self.async_proxy(chat_list, kwargs["hook"], self.template.temperature, streaming=True)
         out_size = self.output_tokens(res)
         emotion, reply = self.handler_result(res)
-        logger.info("emotion: {}, input: {}, reply: {}".format(emotion, inputs, reply))
+        logger.info("emotion: {}, input: {}, reply: {}, input_size: {}".format(emotion, inputs, reply, input_size))
         self.chat_list.append(self.ai_message(reply))
         filename = await self.async_call_ms(reply, self.template.voice, emotion)
-        # cost = self.get_total_cost(input_size, out_size, self.template.get_model())
-        id = create_chat(ChatHistoryModel(template_id=self.template_id, uid=self.uid, input=inputs, output=reply, mp3=os.path.basename(filename), cost_time=time.time() - start, emotion=emotion, cost=0))
+        cost = self.get_total_cost(input_size, out_size, self.template.get_model())
+        id = create_chat(ChatHistoryModel(template_id=self.template_id, uid=self.uid, input=inputs, output=reply, mp3=os.path.basename(filename), cost_time=time.time() - start, emotion=emotion, cost=cost))
         return response(protocol=protocol.chat_response, debug=reply, style=emotion, audio_url=os.path.basename(filename), template_id=self.template_id, chat_id=id).toStr()
 
     def handler_result(self, res: str) -> (str, str):
@@ -123,7 +123,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             buffer.write(analyze_template.format(analyze_input=_future))
         content = buffer.getvalue()
         buffer.close()
-        logger.info("system template generated: {}".format(content))
+        # logger.info("system template generated: {}".format(content))
         return self.system_message(content)
 
     def get_user_template(self, emotions, inputs):
@@ -166,38 +166,31 @@ class AIBeingChatTask(AIBeingBaseTask):
             emotion = dic.get("emotion", "excited")
             filename = dic.get("voice", "")
             text = dic.get("text", "")
-            logger.info("type: {}".format(type(text)))
             self.chat_list.append(self.ai_message(str(text)))
             return response(protocol=protocol.chat_response, debug=text, style=emotion,
                             audio_url=os.path.basename(filename), template_id=self.template_id).toStr()
         raise AIBeingException("greeting list is empty")
 
     def analyze(self, inputs: str) -> str:
-        try:
-            history = self.get_chat_history()
-            if len(history) == 0:
-                return ""
-            prompt = getattr(analyze, "analyze_conversation_with_input", None).replace("###", history).replace("$$$", inputs)
-            res = self.proxy([self.system_message(prompt)], None, self.template.temperature, False)
-            dic = json.loads(res)
-            return getattr(analyze, "generate_analyze_prompt", None)(dic)
-        except Exception as e:
-            logger.error(e)
+        history = self.get_chat_history()
+        if len(history) == 0:
             return ""
+        prompt = getattr(analyze, "analyze_conversation_with_input", None).replace("###", history).replace("$$$", inputs)
+        res = self.proxy([self.system_message(prompt)], None, self.template.temperature, False)
+        dic = json.loads(res)
+        return getattr(analyze, "generate_analyze_prompt", None)(dic)
+
 
     async def async_analyze(self) -> str:
-        try:
-            history = self.get_chat_history()
-            if len(history) == 0:
-                return ""
-            prompt = getattr(analyze, "analyze_conversation", None).replace("###", history)
-            res = await self.async_proxy([self.system_message(prompt)], None, self.template.temperature, False)
-            dic = json.loads(res)
-            assert isinstance(dic, dict)
-            return getattr(analyze, "generate_analyze_prompt", None)(dic)
-        except Exception as e:
-            logger.error(e)
+        history = self.get_chat_history()
+        if len(history) == 0:
             return ""
+        prompt = getattr(analyze, "analyze_conversation", None).replace("###", history)
+        res = await self.async_proxy([self.system_message(prompt)], None, self.template.temperature, False)
+        dic = json.loads(res)
+        assert isinstance(dic, dict)
+        return getattr(analyze, "generate_analyze_prompt", None)(dic)
+
 
     def get_chat_history(self) -> str:
         messages = []
