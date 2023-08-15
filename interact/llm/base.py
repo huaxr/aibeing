@@ -151,22 +151,24 @@ class AIBeingBaseTask(object):
             if streaming:
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"
-                    res = ""
-                    async for line in response.content.iter_any():
-                        data_str = line.decode('utf-8')
-                        if data_str == "data: [DONE]":
-                            return res
-                        json_start = data_str.find('{')
-                        json_data = data_str[json_start:]
-                        logger.info("xxxxxxxxxx: {json_data}")
-                        parsed_data = json.loads(json_data)
-                        delta = parsed_data['choices'][0]['delta']
-                        content = delta.get("content", None)
-                        if content:
-                            logger.info(f"get content: {content}")
-                            res += content
-                            if hook:
-                                await hook.on_llm_new_token(content)
+                    res, buffer = "", b""
+                    async for chunk in response.content.iter_any():
+                        buffer += chunk
+                        while b"\n" in buffer:
+                            line, buffer = buffer.split(b"\n", 1)
+                            data_str = line.decode('utf-8')
+                            if data_str.__contains__("[DONE]"):
+                                return res
+                            json_start = data_str.find('{')
+                            json_data = data_str[json_start:]
+                            parsed_data = json.loads(json_data)
+                            delta = parsed_data['choices'][0]['delta']
+                            content = delta.get("content", None)
+                            if content:
+                                logger.info(f"get content: {content}")
+                                res += content
+                                if hook:
+                                    await hook.on_llm_new_token(content)
             else:
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, "proxy status code is: {}".format(response.status)
