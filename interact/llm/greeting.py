@@ -7,14 +7,15 @@ import os
 from typing import Any
 from datetime import datetime
 from core.cache import redis_cli
+from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
 from interact.llm.base import AIBeingBaseTask
 from interact.llm.template.greeting import greeting_template
 from interact.llm.template.template import Template
 
 class AIBeingGreetingTask(AIBeingBaseTask):
-    def __init__(self, template: Template, expire: int=3600, **kwargs):
-        super().__init__(**kwargs)
+    def __init__(self, text2speech: AudioTransform, template: Template, expire: int=3600):
+        super().__init__(text2speech)
         self.template = template
         self.expire = expire
     def get_current_time(self) -> str:

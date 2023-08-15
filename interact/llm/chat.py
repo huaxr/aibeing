@@ -24,7 +24,7 @@ from interact.llm.template import chat, analyze
 from interact.llm.template.template import  Vector, Voice
 from interact.llm.vector.client import VectorDB
 class AIBeingChatTask(AIBeingBaseTask):
-    def  __init__(self, uid: str, template_id: int, text2speech: AudioTransform, **kwargs):
+    def  __init__(self, uid: str, template_id: int, text2speech: AudioTransform):
         self.template = self.load_template(template_id)
         self.encoding = tiktoken.encoding_for_model(self.get_model_name(self.template.get_model()))
         self.chat_list: List[Dict] = [self.system_message("AIB")]
@@ -36,7 +36,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._analyze_future = None
         self._analyze_future_result = None
         self._wait_analyze_times = 0
-        super().__init__(text2speech, **kwargs)
+        super().__init__(text2speech)
 
     def generate(self, inputs, **kwargs) -> Any:
         if inputs == protocol.get_greeting:

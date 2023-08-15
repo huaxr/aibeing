@@ -19,9 +19,8 @@ from interact.llm.template.template import Template, Vector, Voice, FewShot
 
 class AIBeingBaseTask(object):
 
-    def __init__(self, text2speech: AudioTransform, **kwargs):
+    def __init__(self, text2speech: AudioTransform):
         self.text2speech = text2speech
-        self.kwargs = kwargs
         self.rds_greeting_key = "{id}-{name}-greeting"
         self.msai = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15"
         self.msai_key = os.environ.get("PROXY_KEY")

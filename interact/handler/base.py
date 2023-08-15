@@ -3,6 +3,7 @@
 # @Author: huaxinrui@tal.com
 import json
 
+from core.conf import config
 from core.db import TemplateModel, create_template, get_template_list, get_template_by_id, update_template, update_chat_like, update_chat_unlike
 from core.log import logger
 from interact.handler.voice.microsoft import AudioTransform
@@ -140,7 +141,7 @@ class BaseHandler(object):
             id = int(js["template_id"])
             i = get_template_by_id(id)
             t = Template.model2template(i)
-            task = AIBeingGreetingTask(t, 3600)
+            task = AIBeingGreetingTask(AudioTransform(config.audio_save_path), t, 3600)
             task.generate()
 
         raise RuntimeError("unknown pt: {}".format(pt))
