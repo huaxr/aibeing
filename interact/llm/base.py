@@ -151,6 +151,7 @@ class AIBeingBaseTask(object):
         headers, data = self.prepare_header_data(messages, streaming, temperature)
         async with aiohttp.ClientSession() as session:
             if streaming:
+                # 主动触发一次token更新
                 await hook.on_llm_new_token("{")
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"

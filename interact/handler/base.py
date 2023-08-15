@@ -2,10 +2,8 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import json
-
 from core.conf import config
 from core.db import TemplateModel, create_template, get_template_list, get_template_by_id, update_template, update_chat_like, update_chat_unlike
-from core.log import logger
 from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.greeting import AIBeingGreetingTask
 from interact.llm.template.template import Template
@@ -26,7 +24,6 @@ class BaseHandler(object):
         raise NotImplementedError
 
     def get_model_from_json(self, dic:{}) -> TemplateModel:
-        logger.info("get model from json: %s" %dic)
         name = dic.get("name")
         assert len(name) > 0, "name should not be empty"
 

@@ -101,6 +101,8 @@ class AIBeingChatTask(AIBeingBaseTask):
         return response(protocol=protocol.chat_response, debug=reply, style=emotion, audio_url=os.path.basename(filename), template_id=self.template_id, chat_id=id).toStr()
 
     def handler_result(self, res: str) -> (str, str):
+        assert len(res) > 0, "result is empty"
+        res = res.replace("\n", "")
         dic = self.get_json(res)
         emotion = dic.get("emotion", "")
         reply = dic.get("reply", "")
