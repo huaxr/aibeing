@@ -123,7 +123,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             buffer.write(analyze_template.format(analyze_input=_future))
         content = buffer.getvalue()
         buffer.close()
-        # logger.info("system template generated: {}".format(content))
+        logger.info("system template generated: {}".format(content))
         return self.system_message(content)
 
     def get_user_template(self, emotions, inputs):
@@ -187,6 +187,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             return ""
         prompt = getattr(analyze, "analyze_conversation", None).replace("###", history)
         res = await self.async_proxy([self.system_message(prompt)], None, self.template.temperature, False)
+        logger.info("analyze result: {}".format(res))
         dic = json.loads(res)
         assert isinstance(dic, dict)
         return getattr(analyze, "generate_analyze_prompt", None)(dic)
