@@ -156,6 +156,8 @@ class AIBeingBaseTask(object):
                         buffer += chunk
                         while b"\n" in buffer:
                             line, buffer = buffer.split(b"\n", 1)
+                            if len(line) == 0:
+                                continue
                             data_str = line.decode('utf-8')
                             logger.info(f"data_str: {data_str}")
                             if data_str.__contains__("[DONE]"):
