@@ -185,9 +185,9 @@ class AIBeingChatTask(AIBeingBaseTask):
         history = self.get_chat_history()
         if len(history) == 0:
             return ""
-        prompt = getattr(analyze, "analyze_conversation", None).replace("###", history)
+        prompt = getattr(analyze, "analyze_conversation", None).replace("###", history).replace("$$$", self.template.prompt)
+        logger.info("analyze prompt: {}".format(prompt))
         res = await self.async_proxy([self.system_message(prompt)], None, self.template.temperature, False)
-        logger.info("analyze result: {}".format(res))
         dic = json.loads(res)
         assert isinstance(dic, dict)
         return getattr(analyze, "generate_analyze_prompt", None)(dic)

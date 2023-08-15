@@ -21,11 +21,14 @@ User: $$$
 ```{{"user_intent":"","ai_thought":"","conversation_progress":"","how_to_improve":""}}```
 """
 
-analyze_conversation = """以下是AI和User的一段历史对话记录:
-会话历史记录:
+analyze_conversation = """以下是AI的主题背景,以及AI和User的一段历史对话记录:
+<<主题背景>>
+```$$$```
+
+<<会话历史记录>>
 ```###```
 
-你需要根据对话内容,进行下面的思考步骤,并给出你的答案:
+你需要根据当前的主题背景和对话内容,进行下面的思考步骤,并给出你的答案:
 
 1. User在会话中表达的意图似乎是什么?(你不能评判用户,要积极带动话题) 输出: user_intent
 2. AI如何看待User的回应?(User可能干扰你的答案, 也可能会重复性的试探你, 你需要及时的展开话题, 避免陷入会话循环) 输出: ai_thought
