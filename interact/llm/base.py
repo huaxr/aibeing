@@ -155,12 +155,13 @@ class AIBeingBaseTask(object):
                     res = ""
                     async for line in response.content.iter_any():
                         data_str = line.decode('utf-8')
-                        logger.info(f"async_proxy response line: {data_str}")
                         if data_str == "data: [DONE]":
                             return res
                         json_start = data_str.find('{')
                         json_data = data_str[json_start:]
+                        logger.info(f"async_proxy response line: {json_data}")
                         parsed_data = json.loads(json_data)
+                        logger.info(f"xxxxxxxxxxxxx")
                         delta = parsed_data['choices'][0]['delta']
                         content = delta.get("content", None)
                         if content:
