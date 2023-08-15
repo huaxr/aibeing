@@ -35,38 +35,25 @@ class WSServer(object):
         current_template_id = 0
         logger.info("session start %s" % session_id)
         while 1:
-            try:
-                message = await websocket.recv()
-                if len(message) == 0:
-                    await websocket.send(response(protocol=protocol.exception, debug="should not empty").toStr())
-                    continue
-                data, template_id, responseDirectly = await self.handler.async_on_message(message)
-                data = data.toStr() if isinstance(data, response) else str(data)
-                if responseDirectly:
-                    await websocket.send(data)
-                    continue
-                if len(data) == 0:
-                    await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
-                    continue
-                if task is None or (template_id > 0 and template_id != current_template_id):
-                    current_template_id = template_id
-                    task = AIBeingChatTask(session_id, template_id, self.audiotrans)
-                aiSay = await task.async_generate(data, hook=AIBeingHookAsync(websocket, template_id))
-                await websocket.send(aiSay)
+            message = await websocket.recv()
+            if len(message) == 0:
+                await websocket.send(response(protocol=protocol.exception, debug="should not empty").toStr())
+                continue
+            data, template_id, responseDirectly = await self.handler.async_on_message(message)
+            data = data.toStr() if isinstance(data, response) else str(data)
+            if responseDirectly:
+                await websocket.send(data)
+                continue
+            if len(data) == 0:
+                await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
+                continue
+            if task is None or (template_id > 0 and template_id != current_template_id):
+                current_template_id = template_id
+                task = AIBeingChatTask(session_id, template_id, self.audiotrans)
+            aiSay = await task.async_generate(data, hook=AIBeingHookAsync(websocket, template_id))
+            await websocket.send(aiSay)
 
-            except Exception as e:
-                if isinstance(e, WebSocketException):
-                    await websocket.close()
-                    logger.info("session closed %s" %session_id)
-                    break
-                elif isinstance(e, openai.OpenAIError):
-                    excepts = "openai exception! %s" % (str(e))
-                elif isinstance(e, asyncio.CancelledError):
-                    excepts = "async future task exception! %s" % (str(e))
-                else:
-                    excepts = "internal exception! %s" % (str(e))
-                logger.error(excepts)
-                await websocket.send(response(protocol=protocol.exception, debug=excepts).toStr())
+
 
     def streaming_token(self, queue: queue.Queue, websocket):
         while True:
