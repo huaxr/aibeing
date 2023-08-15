@@ -28,7 +28,6 @@ class AIBeingChatTask(AIBeingBaseTask):
         self.template = self.load_template(template_id)
         self.encoding = tiktoken.encoding_for_model(self.get_model_name(self.template.get_model()))
         self.chat_list: List[Dict] = [self.system_message("AIB")]
-        self.text2speech = text2speech
         self.uid = uid
         self.template_id = template_id
         self.vector = VectorDB(config.llm_type)
@@ -37,7 +36,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._analyze_future = None
         self._analyze_future_result = None
         self._wait_analyze_times = 0
-        super().__init__(**kwargs)
+        super().__init__(text2speech, **kwargs)
 
     def generate(self, inputs, **kwargs) -> Any:
         if inputs == protocol.get_greeting:
@@ -62,7 +61,7 @@ class AIBeingChatTask(AIBeingBaseTask):
 
     async def async_generate(self, inputs, **kwargs) -> Any:
         if inputs == protocol.get_greeting:
-            return await self.async_greeting()
+            return self.greeting()
 
         self.chat_list.append(self.user_message(inputs))
 
@@ -106,19 +105,6 @@ class AIBeingChatTask(AIBeingBaseTask):
         emotion = dic.get("emotion", "")
         reply = dic.get("reply", "")
         return emotion, reply
-    def call_ms(self, text, voice: Voice, emotion: str) -> str:
-        if not voice.switch:
-            return ""
-        filename = self.text2speech.save_path + ".".join(["aib", str(time.time()), "mp3"])
-        self.text2speech.text2audio(voice.style, emotion, text, filename)
-        return filename
-
-    async def async_call_ms(self, text: str, voice: Voice, emotion: str) -> str:
-        if not voice.switch:
-            return ""
-        filename = self.text2speech.save_path + ".".join(["aib", str(time.time()), "mp3"])
-        await self.text2speech.async_text2audio(voice.style, emotion, text, filename)
-        return filename
 
     def get_system_template(self, prompt, vec_context, _future, lang="en"):
         buffer = io.StringIO()
@@ -177,25 +163,12 @@ class AIBeingChatTask(AIBeingBaseTask):
             assert isinstance(greeting_list, list)
             index = random.randint(0, len(greeting_list) - 1)
             res = greeting_list[index]
-            emotion = "excited"
-            filename = self.call_ms(res, self.template.voice, emotion)
+            dic = json.loads(res)
+            emotion = dic.get(dic, "emotion", "excited")
+            filename = dic.get(dic, "voice", "")
+            text = dic.get(dic, "text", "")
             self.chat_list.append(self.ai_message(res))
-            return response(protocol=protocol.chat_response, debug=res, style=emotion,
-                            audio_url=os.path.basename(filename), template_id=self.template_id).toStr()
-        raise AIBeingException("greeting list is empty")
-
-    async def async_greeting(self):
-        key = self.rds_greeting_key.format(id=self.template.id, name=self.template.name)
-        res = redis_cli.get_value(key)
-        if res:
-            greeting_list = json.loads(res)
-            assert isinstance(greeting_list, list)
-            index = random.randint(0, len(greeting_list) - 1)
-            res = greeting_list[index]
-            emotion = "excited"
-            filename = await self.async_call_ms(res, self.template.voice, emotion)
-            self.chat_list.append(self.ai_message(res))
-            return response(protocol=protocol.chat_response, debug=res, style=emotion,
+            return response(protocol=protocol.chat_response, debug=text, style=emotion,
                             audio_url=os.path.basename(filename), template_id=self.template_id).toStr()
         raise AIBeingException("greeting list is empty")
 

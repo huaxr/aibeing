@@ -3,6 +3,7 @@
 # @Author: huaxinrui@tal.com
 
 import json
+import os
 from typing import Any
 from datetime import datetime
 from core.cache import redis_cli
@@ -33,19 +34,15 @@ class AIBeingGreetingTask(AIBeingBaseTask):
             raise AIBeingException("No greeting prompt found for template:" + self.template.name)
         prompt = greeting_template.format(current_time=self.get_current_time()).replace("###", temp)
         res = self.proxy([self.system_message(prompt)], None, self.template.temperature, False)
-        print(res)
         greeting_list = json.loads(res)
-        redis_cli.set_value(key, json.dumps(greeting_list), self.expire)
+        values = []
+        emotion = "excited"
+        for i in greeting_list:
+            filename = self.call_ms(i, self.template.voice, emotion)
+            file_path = os.path.basename(filename)
+            values.append({"text": i, "voice": file_path, "emotion": "excited"})
+        print(values)
+        redis_cli.set_value(key, json.dumps(values), self.expire)
         return 1
     async def async_generate(self) -> Any:
-        key = self.rds_greeting_key.format(id=self.template.id, name=self.template.name)
-        temp = self.template.get_character_prompt()
-        if not temp:
-            raise AIBeingException("No greeting prompt found for template:" + self.template.name)
-        print(temp)
-        prompt = greeting_template.format(current_time=self.get_current_time()).replace("###", temp)
-        res = await self.async_proxy([self.system_message(prompt)], None, self.template.temperature, False)
-        print(res)
-        greeting_list = json.loads(res)
-        redis_cli.set_value(key, json.dumps(greeting_list), self.expire)
-        return 1
+        raise NotImplementedError

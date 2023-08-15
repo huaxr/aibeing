@@ -3,6 +3,7 @@
 # @Author: huaxinrui@tal.com
 import json
 import os
+import time
 from typing import Any, Union, List
 
 import aiohttp
@@ -12,17 +13,19 @@ from langchain.cache import InMemoryCache
 from langchain.callbacks.base import BaseCallbackHandler
 
 from core.db import get_template_by_id, TemplateModel
-from core.log import logger
+from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
 from interact.llm.template.template import Template, Vector, Voice, FewShot
 
 class AIBeingBaseTask(object):
 
-    def __init__(self,  **kwargs):
+    def __init__(self, text2speech: AudioTransform, **kwargs):
+        self.text2speech = text2speech
         self.kwargs = kwargs
         self.rds_greeting_key = "{id}-{name}-greeting"
         self.msai = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15"
         self.msai_key = os.environ.get("PROXY_KEY")
+
     def generate(self, *args, **kwargs) -> Any:
         raise NotImplementedError
     async def async_generate(self, *args, **kwargs) -> Any:
@@ -168,7 +171,6 @@ class AIBeingBaseTask(object):
                             delta = parsed_data['choices'][0]['delta']
                             content = delta.get("content", None)
                             if content:
-                                logger.info(f"get content: {content}")
                                 res += content
                                 if hook:
                                     await hook.on_llm_new_token(content)
@@ -184,6 +186,21 @@ class AIBeingBaseTask(object):
         return {"role": "user", "content": content}
     def ai_message(self, content) -> dict:
         return {"role": "assistant", "content": content}
+
+
+    def call_ms(self, text, voice: Voice, emotion: str) -> str:
+        if not voice.switch:
+            return ""
+        filename = self.text2speech.save_path + ".".join(["aib", str(time.time()), "mp3"])
+        self.text2speech.text2audio(voice.style, emotion, text, filename)
+        return filename
+
+    async def async_call_ms(self, text: str, voice: Voice, emotion: str) -> str:
+        if not voice.switch:
+            return ""
+        filename = self.text2speech.save_path + ".".join(["aib", str(time.time()), "mp3"])
+        await self.text2speech.async_text2audio(voice.style, emotion, text, filename)
+        return filename
 
 if __name__ == "__main__":
     a = AIBeingBaseTask("", 0)
