@@ -1,0 +1,11 @@
+[Unit]
+Description=Aibeing Service
+After=network.target
+
+[Service]
+ExecStart=/root/.conda/envs/env/bin/python /root/aibeing/main.py --type=ws
+WorkingDirectory=/root/aibeing
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

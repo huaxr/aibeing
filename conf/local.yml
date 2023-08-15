@@ -1,0 +1,33 @@
+log:
+  path: /tmp/aibeing.log
+
+ws:
+  port: 8888
+  ping_interval: 20  # 心跳间隔
+  ping_timeout: 20   # 心跳超时
+
+mysql:
+  dsn: mysql+mysqlconnector://root:123456@localhost/aibeing
+
+redis:
+  host: 127.0.0.1
+  port: 6379
+  db: 0
+
+llm:
+  streaming: true
+  async: false
+  embedding: /Users/huaxinrui/AIB/aibeing/interact/llm/vector/embedding # or openai
+  type: msai # or openai
+
+audio:
+  upload_path: "/tmp/"
+  save_path: /tmp/
+
+
+vector:
+  mode: "server"
+  host: "127.0.0.1"
+#  host: "47.253.53.220"
+  port: 8000
+

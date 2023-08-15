@@ -1,0 +1,15 @@
+langchain
+openai
+tiktoken==0.4.0
+mysql-connector-python
+websockets
+pyyaml
+flask
+mysql-connector
+mysql-connector-python
+aiofiles
+redis
+chromadb-client
+aiohttp
+google-search-results
+FlagEmbedding
