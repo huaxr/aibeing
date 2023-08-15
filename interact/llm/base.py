@@ -13,6 +13,7 @@ from langchain.cache import InMemoryCache
 from langchain.callbacks.base import BaseCallbackHandler
 
 from core.db import get_template_by_id, TemplateModel
+from core.log import logger
 from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
 from interact.llm.template.template import Template, Vector, Voice, FewShot
