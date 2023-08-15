@@ -154,10 +154,11 @@ class AIBeingBaseTask(object):
                     res, buffer = "", b""
                     async for chunk in response.content.iter_any():
                         buffer += chunk
-                        if b"\n" in buffer:
+                        while b"\n" in buffer:
                             line, buffer = buffer.split(b"\n", 1)
                             if len(line) == 0:
                                 continue
+                            logger.info(f"get line: {line}")
                             data_str = line.decode('utf-8')
                             if data_str.__contains__("[DONE]"):
                                 return res
@@ -175,7 +176,6 @@ class AIBeingBaseTask(object):
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, "proxy status code is: {}".format(response.status)
                     json_response = await response.json()
-                    logger.info(f"async_proxy response: {json_response}")
                     return json_response["choices"][0]["message"]["content"]
 
     def system_message(self, content) -> dict:
