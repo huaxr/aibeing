@@ -164,9 +164,9 @@ class AIBeingChatTask(AIBeingBaseTask):
             index = random.randint(0, len(greeting_list) - 1)
             dic = greeting_list[index]
             logger.info("get greeting: {}".format(res))
-            emotion = dic.get(dic, "emotion", "excited")
-            filename = dic.get(dic, "voice", "")
-            text = dic.get(dic, "text", "")
+            emotion = dic.get("emotion", "excited")
+            filename = dic.get("voice", "")
+            text = dic.get("text", "")
             self.chat_list.append(self.ai_message(res))
             return response(protocol=protocol.chat_response, debug=text, style=emotion,
                             audio_url=os.path.basename(filename), template_id=self.template_id).toStr()
