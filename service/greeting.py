@@ -18,7 +18,6 @@ def main():
             print("except", e)
             continue
 
-
 if __name__ == '__main__':
     # */30 * * * * /root/.conda/envs/env/bin/python /root/aibeing/main.py --type=greeting  >> /tmp/cron.log 2>&1
     main()

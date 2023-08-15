@@ -108,6 +108,11 @@ class AIBeingChatTask(AIBeingBaseTask):
         reply = dic.get("reply", "")
         return emotion, reply
 
+    def handler_analyze_result(self, res: str) -> dict:
+        assert len(res) > 0, "analyze result is empty"
+        res = res.replace("\n", "")
+        return self.get_json(res)
+
     def get_system_template(self, prompt, vec_context, _future, lang="en"):
         buffer = io.StringIO()
         v, a, i = "corpus_template", "analyze_template", "introduction_template"
@@ -179,7 +184,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             return ""
         prompt = getattr(analyze, "analyze_conversation_with_input", None).replace("###", history).replace("$$$", inputs)
         res = self.proxy([self.system_message(prompt)], None, self.template.temperature, False)
-        dic = json.loads(res)
+        dic = self.handler_analyze_result(res)
         return getattr(analyze, "generate_analyze_prompt", None)(dic)
 
 
@@ -190,7 +195,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         prompt = getattr(analyze, "analyze_conversation", None).replace("###", history).replace("$$$", self.template.prompt)
         logger.info("analyze prompt: {}".format(prompt))
         res = await self.async_proxy([self.system_message(prompt)], None, self.template.temperature, False)
-        dic = json.loads(res)
+        dic = self.handler_analyze_result(res)
         assert isinstance(dic, dict)
         return getattr(analyze, "generate_analyze_prompt", None)(dic)
 
