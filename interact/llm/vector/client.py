@@ -26,13 +26,15 @@ if config.llm_type == "msai":
         raise RuntimeError("model not found")
 
 class VectorDB(Vector):
-    def get_embeddings(self, texts: List[str], typ: str = "openai") -> List[List[float]]:
-        if typ == "openai":
+    def __init__(self, typ: str = "openai"):
+        self.typ = typ
+    def get_embeddings(self, texts: List[str]) -> List[List[float]]:
+        if self.typ == "openai":
             return OpenAIEmbeddings().embed_documents(texts)
         res =  model.encode(texts)
         return res.tolist()
-    async def async_get_embeddings(self, texts: List[str], typ: str = "openai") -> List[float]:
-        if typ == "openai":
+    async def async_get_embeddings(self, texts: List[str]) -> List[float]:
+        if self.typ == "openai":
             res = await OpenAIEmbeddings().aembed_documents(texts)
             return res[0]
         res = model.encode(texts)
@@ -45,12 +47,12 @@ class VectorDB(Vector):
     def add(self, collection: str, docs: List[str]):
         collection = db.get_collection(name=collection)
         ids = [self.md5(i) for i in docs]
-        collection.add(documents=docs, ids=ids, embeddings=self.get_embeddings(docs, typ=config.llm_type))
+        collection.add(documents=docs, ids=ids, embeddings=self.get_embeddings(docs))
 
     def similarity(self, collection: str, doc: str, tok_k: int) -> List[str]:
         collection = db.get_collection(name=collection)
         res = collection.query(
-            query_embeddings=self.get_embeddings([doc], typ=config.llm_type),
+            query_embeddings=self.get_embeddings([doc]),
             n_results=tok_k,
             # include=["documents"]
         )
@@ -60,7 +62,7 @@ class VectorDB(Vector):
     async def async_similarity(self, collection: str, doc: str, tok_k: int) -> List[str]:
         collection = db.get_collection(name=collection)
         res = collection.query(
-            query_embeddings=await self.async_get_embeddings([doc], typ=config.llm_type),
+            query_embeddings=await self.async_get_embeddings([doc]),
             n_results=tok_k,
             # include=["documents"]
         )
@@ -86,7 +88,7 @@ class VectorDB(Vector):
 
 if __name__ == "__main__":
     collection = "mixiaoquan"
-    vdb = VectorDB()
+    vdb = VectorDB(config.llm_type)
     vdb.delete_collection(collection)  #
     vdb.create_collection(collection)  #
     docs = ["我们一起来玩吧", "天青色等烟雨", "这雨下的可真大啊", "你知道我叫什么吗", "我是华心瑞"]

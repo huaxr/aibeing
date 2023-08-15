@@ -25,7 +25,6 @@ class Config:
     def mysql_dsn(self) -> str:
         return self.data["mysql"]["dsn"]
 
-
     @property
     def llm_embedding(self) -> str:
         return self.data["llm"]["embedding"]

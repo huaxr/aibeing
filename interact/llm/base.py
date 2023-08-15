@@ -108,11 +108,6 @@ class AIBeingBaseTask(object):
             raise AIBeingException("No template found for id:"+str(template_id))
         return self.model2template(template_model)
 
-    def word_count(self, inputs: str) -> int:
-        cn_characters = [char for char in inputs if '\u4e00' <= char <= '\u9fff']
-        cn_count = len(cn_characters)
-        return cn_count
-
     def prepare_header_data(self, messages: List[str], streaming: bool, temperature: float) -> ({}, {}):
         headers = {
             "Content-Type": "application/json",
@@ -154,7 +149,7 @@ class AIBeingBaseTask(object):
         headers, data = self.prepare_header_data(messages, streaming, temperature)
         async with aiohttp.ClientSession() as session:
             if streaming:
-                async with session.post(self.msai, headers=headers, json=data, timeout=None, stream=True) as response:
+                async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"
                     res = ""
                     async for line in response.content.iter_any():

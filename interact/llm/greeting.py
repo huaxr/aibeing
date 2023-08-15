@@ -32,7 +32,7 @@ class AIBeingGreetingTask(AIBeingBaseTask):
         if not temp:
             raise AIBeingException("No greeting prompt found for template:" + self.template.name)
         prompt = greeting_template.format(current_time=self.get_current_time()).replace("###", temp)
-        res = self.proxy([{"role":"system", "content":prompt}], None, self.template.temperature, False)
+        res = self.proxy([self.system_message(prompt)], None, self.template.temperature, False)
         print(res)
         greeting_list = json.loads(res)
         redis_cli.set_value(key, json.dumps(greeting_list), self.expire)
@@ -44,7 +44,7 @@ class AIBeingGreetingTask(AIBeingBaseTask):
             raise AIBeingException("No greeting prompt found for template:" + self.template.name)
         print(temp)
         prompt = greeting_template.format(current_time=self.get_current_time()).replace("###", temp)
-        res = await self.async_proxy([{"role":"system", "content":prompt}], None, self.template.temperature, False)
+        res = await self.async_proxy([self.system_message(prompt)], None, self.template.temperature, False)
         print(res)
         greeting_list = json.loads(res)
         redis_cli.set_value(key, json.dumps(greeting_list), self.expire)

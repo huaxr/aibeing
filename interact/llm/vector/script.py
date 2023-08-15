@@ -1,9 +1,12 @@
 # -*- coding: utf-8 -*-
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
+from core.conf import config
 from interact.llm.vector.client import VectorDB
 
 class ScriptDB(VectorDB):
+    def __init__(self, typ:str):
+        super().__init__(typ)
     def flush_db(self, collection: str, folder_path: str, chunk_size: int, batch_size: int):
         batch = batch_size
         tmp = []
@@ -17,7 +20,7 @@ class ScriptDB(VectorDB):
 
 def main():
     collection = "mixiaoquan"
-    vdb = ScriptDB()
+    vdb = ScriptDB(config.llm_type)
     vdb.delete_collection(collection)
     vdb.create_collection(collection)
     # p = "/Users/huaxinrui/AIB/aibeing/data/mxq"

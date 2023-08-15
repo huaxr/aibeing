@@ -15,7 +15,6 @@ redis:
   db: 0
 
 llm:
-  streaming: true
   async: true
   embedding: /root/embedding
   type: msai # or openai
@@ -23,7 +22,6 @@ llm:
 audio:
   upload_path: "/var/www/uploads/"
   save_path: /usr/share/nginx/html/sounds/
-
 
 vector:
   mode: "server"

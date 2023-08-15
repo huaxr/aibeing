@@ -15,7 +15,6 @@ redis:
   db: 0
 
 llm:
-  streaming: true
   async: false
   embedding: /Users/huaxinrui/AIB/aibeing/interact/llm/vector/embedding # or openai
   type: msai # or openai

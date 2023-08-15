@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
+
 import asyncio
 import io
 import json
@@ -9,6 +10,8 @@ import random
 import time
 from typing import List, Any, Dict
 import tiktoken
+
+from core.conf import config
 from core.log import logger
 from core.cache import redis_cli
 from core.db import ChatHistoryModel, create_chat
@@ -28,16 +31,15 @@ class AIBeingChatTask(AIBeingBaseTask):
         self.text2speech = text2speech
         self.uid = uid
         self.template_id = template_id
-        self.vector = VectorDB()
+        self.vector = VectorDB(config.llm_type)
         # self.search = GoogleAPIWrapper()
         # for async only
         self._analyze_future = None
         self._analyze_future_result = None
         self._wait_analyze_times = 0
         super().__init__(**kwargs)
-    def generate(self, inputs, **kwargs) -> Any:
-        logger.info("inputs: {}".format(inputs))
 
+    def generate(self, inputs, **kwargs) -> Any:
         if inputs == protocol.get_greeting:
             return self.greeting()
 
@@ -50,7 +52,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         input_size = self.input_tokens()
         out_size = self.output_tokens(res)
         emotion, reply = self.handler_result(res)
-        logger.info("emotion: {}, input: {}, reply: {}".format(emotion, inputs, reply))
+        logger.info("emotion: {}, input: {}, reply: {}, input_token_size: {}".format(emotion, inputs, reply, input_size))
         self.chat_list.append(self.user_message(inputs))
         self.chat_list.append(self.ai_message(reply))
         filename = self.call_ms(reply, self.template.voice, emotion)
@@ -92,7 +94,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         res = await self.async_proxy(chat_list, kwargs["hook"], self.template.temperature, streaming=True)
         out_size = self.output_tokens(res)
         emotion, reply = self.handler_result(res)
-        logger.info("emotion: {}, input: {}, reply: {}".format(emotion, inputs, reply))
+        logger.info("emotion: {}, input: {}, reply: {}, input_token_size: {}".format(emotion, inputs, reply, input_size))
         self.chat_list.append(self.ai_message(reply))
         filename = await self.async_call_ms(reply, self.template.voice, emotion)
         cost = self.get_total_cost(input_size, out_size, self.template.get_model())
@@ -135,7 +137,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             buffer.write(analyze_template.format(analyze_input=_future))
         content = buffer.getvalue()
         buffer.close()
-        # logger.info("system template generated: {}".format(content))
+        logger.info("system template generated: {}".format(content))
         return self.system_message(content)
 
     def get_user_template(self, emotions, inputs):

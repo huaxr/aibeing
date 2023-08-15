@@ -20,6 +20,7 @@ from langchain.prompts.chat import (
 )
 
 from core import conf
+from core.conf import config
 from core.log import logger
 from core.cache import redis_cli
 from core.db import ChatHistoryModel, create_chat
@@ -34,7 +35,6 @@ from interact.llm.template import chat, analyze
 from interact.llm.template.template import  Vector, Voice, FewShot
 from interact.llm.template.contichat import continue_template
 from interact.llm.vector.client import VectorDB
-from interact.llm.lm import LLMProxy
 class AIBeingChatTask(AIBeingBaseTask):
     def  __init__(self, uid: str, template_id: int, text2speech: AudioTransform, **kwargs):
         self.template = self.load_template(template_id)
@@ -46,7 +46,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         self.text2speech = text2speech
         self.uid = uid
         self.template_id = template_id
-        self.vector = VectorDB()
+        self.vector = VectorDB(config.llm_type)
         self.search = GoogleAPIWrapper()
 
         # for async only
