@@ -148,12 +148,12 @@ class AIBeingBaseTask(object):
 
     async def async_proxy(self, messages:List, hook:Union[BaseCallbackHandler,None], temperature:float=0.7, streaming:bool=False) -> str:
         assert len(messages) > 0, "messages length must > 0"
+        await hook.on_llm_new_token("{")
         headers, data = self.prepare_header_data(messages, streaming, temperature)
         async with aiohttp.ClientSession() as session:
             if streaming:
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"
-                    await hook.on_llm_new_token("{")
                     res, buffer = "", b""
                     async for chunk in response.content.iter_any():
                         buffer += chunk
