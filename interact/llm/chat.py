@@ -221,7 +221,6 @@ class AIBeingChatTask(AIBeingBaseTask):
             res = await self.async_proxy([self.system_message(prompt)], None, self.template.temperature, False)
             dic = json.loads(res)
             assert isinstance(dic, dict)
-            logger.info("the analyze result is: {}".format(res))
             return getattr(analyze, "generate_analyze_prompt", None)(dic)
         except Exception as e:
             logger.error(e)

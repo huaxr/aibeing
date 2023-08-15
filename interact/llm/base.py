@@ -158,7 +158,6 @@ class AIBeingBaseTask(object):
                             line, buffer = buffer.split(b"\n", 1)
                             if len(line) == 0:
                                 continue
-                            logger.info(f"get line: {line}")
                             data_str = line.decode('utf-8')
                             if data_str.__contains__("[DONE]"):
                                 return res

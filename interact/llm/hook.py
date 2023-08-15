@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
-
+import asyncio
 from typing import Any, Dict, List, Optional, Union
 from langchain.schema import AgentAction, AgentFinish
 from langchain.callbacks.base import BaseCallbackHandler, AsyncCallbackHandler
@@ -23,6 +23,7 @@ class AIBeingHookAsync(AsyncCallbackHandler):
             await self.sock.send(response(protocol=protocol.stream_start, template_id=self.template_id).toStr())
 
         if len(token) > 0 and self.current_sentence.__contains__(self.content_format) and not token.__contains__('"') and not token.__contains__("}"):
+            await asyncio.sleep(0.5)
             await self.sock.send(response(protocol=protocol.stream_action, debug=token, template_id=self.template_id).toStr())
 
         if token.__contains__("}"):
