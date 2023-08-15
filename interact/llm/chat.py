@@ -88,16 +88,16 @@ class AIBeingChatTask(AIBeingBaseTask):
         start = time.time()
         contexts = await self.async_similarity(inputs, self.template.vec)
         self.chat_list[0] = self.get_system_template(self.template.get_prompt(), "\n".join(contexts), self._analyze_future_result, lang="cn")
-        input_size = self.input_tokens()
+        # input_size = self.input_tokens()
         chat_list = self.chat_list + [self.get_user_template(self.template.get_emotions(), inputs)]
         res = await self.async_proxy(chat_list, kwargs["hook"], self.template.temperature, streaming=True)
         out_size = self.output_tokens(res)
         emotion, reply = self.handler_result(res)
-        logger.info("emotion: {}, input: {}, reply: {}, input_token_size: {}".format(emotion, inputs, reply, input_size))
+        logger.info("emotion: {}, input: {}, reply: {}".format(emotion, inputs, reply))
         self.chat_list.append(self.ai_message(reply))
         filename = await self.async_call_ms(reply, self.template.voice, emotion)
-        cost = self.get_total_cost(input_size, out_size, self.template.get_model())
-        id = create_chat(ChatHistoryModel(template_id=self.template_id, uid=self.uid, input=inputs, output=reply, mp3=os.path.basename(filename), cost_time=time.time() - start, emotion=emotion, cost=cost))
+        # cost = self.get_total_cost(input_size, out_size, self.template.get_model())
+        id = create_chat(ChatHistoryModel(template_id=self.template_id, uid=self.uid, input=inputs, output=reply, mp3=os.path.basename(filename), cost_time=time.time() - start, emotion=emotion, cost=0))
         return response(protocol=protocol.chat_response, debug=reply, style=emotion, audio_url=os.path.basename(filename), template_id=self.template_id, chat_id=id).toStr()
 
     def handler_result(self, res: str) -> (str, str):
