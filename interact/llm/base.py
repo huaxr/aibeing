@@ -152,6 +152,7 @@ class AIBeingBaseTask(object):
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"
                     res, buffer = "", b""
+                    await hook.on_llm_new_token("{")
                     async for chunk in response.content.iter_any():
                         buffer += chunk
                         while b"\n" in buffer:

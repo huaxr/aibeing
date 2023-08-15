@@ -16,19 +16,24 @@ class AIBeingHookAsync(AsyncCallbackHandler):
         self.content_format = '"reply":'
         self.current_sentence = ""
 
+        self.stream_start_done = False
+        self.stream_end_done = False
+
     async def on_llm_new_token(self, token: str, **kwargs: Any) -> None:
         self.current_sentence += token
 
-        if token.__contains__("{"):
+        if token.__contains__("{") and not self.stream_start_done:
             await self.sock.send(response(protocol=protocol.stream_start, template_id=self.template_id).toStr())
+            self.stream_start_done = True
 
         if len(token) > 0 and self.current_sentence.__contains__(self.content_format) and not token.__contains__('"') and not token.__contains__("}"):
-            await asyncio.sleep(0.5)
+            await asyncio.sleep(0.05)
             await self.sock.send(response(protocol=protocol.stream_action, debug=token, template_id=self.template_id).toStr())
 
-        if token.__contains__("}"):
+        if token.__contains__("}") and not self.stream_end_done:
             self.current_sentence = ""
             await self.sock.send(response(protocol=protocol.stream_end, template_id=self.template_id).toStr())
+            self.stream_end_done = True
 
 class AIBeingHook(BaseCallbackHandler):
     """Callback Handler that prints to std out."""
