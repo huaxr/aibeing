@@ -72,7 +72,6 @@ class AIBeingChatTask(AIBeingBaseTask):
             if self._analyze_future.done():
                 logger.info("_analyze_future is done, now set _analyze_future_result and recreate task")
                 self._analyze_future_result = self._analyze_future.result()
-                logger.info("00000000000analyze result: {}".format(self._analyze_future_result))
                 self._analyze_future = asyncio.create_task(self.async_analyze())
                 self._wait_analyze_times = 0
             else:
