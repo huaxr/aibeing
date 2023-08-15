@@ -67,7 +67,11 @@ class WSServer(object):
                     excepts = "async future task exception! %s" % (str(e))
                 else:
                     exc_type, exc_value, exc_traceback = sys.exc_info()
-                    traceback.print_tb(exc_traceback)
+                    error_stack = traceback.format_tb(exc_traceback)
+                    errors = []
+                    for line in error_stack:
+                        errors.append(line)
+                    logger.error("\n".join(errors))
                     excepts = f"internal exception! {exc_type.__name__}: {exc_value}"
                 logger.error(excepts)
                 await websocket.send(response(protocol=protocol.exception, debug=excepts).toStr())
