@@ -143,5 +143,6 @@ class BaseHandler(object):
             t = Template.model2template(i)
             task = AIBeingGreetingTask(AudioTransform(config.audio_save_path), t, 3600)
             task.generate()
+            return response(protocol=protocol.flush_cache_rsp, debug=""), -1, True
 
         raise RuntimeError("unknown pt: {}".format(pt))
