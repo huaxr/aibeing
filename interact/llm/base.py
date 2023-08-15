@@ -143,7 +143,6 @@ class AIBeingBaseTask(object):
             response = requests.post(self.msai, headers=headers, json=data, stream=False)
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
             res = response.json()["choices"][0]["message"]["content"]
-            print(res)
             return res
 
     async def async_proxy(self, messages:List, hook:Union[BaseCallbackHandler,None], temperature:float=0.7, streaming:bool=False) -> str:

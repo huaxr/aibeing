@@ -163,6 +163,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             assert isinstance(greeting_list, list)
             index = random.randint(0, len(greeting_list) - 1)
             res = greeting_list[index]
+            logger.info("get greeting: {}".format(res))
             dic = json.loads(res)
             emotion = dic.get(dic, "emotion", "excited")
             filename = dic.get(dic, "voice", "")
