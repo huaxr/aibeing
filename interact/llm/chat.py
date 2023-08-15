@@ -166,7 +166,8 @@ class AIBeingChatTask(AIBeingBaseTask):
             emotion = dic.get("emotion", "excited")
             filename = dic.get("voice", "")
             text = dic.get("text", "")
-            self.chat_list.append(self.ai_message(res))
+            logger.info("type: {}".format(type(text)))
+            self.chat_list.append(self.ai_message(str(text)))
             return response(protocol=protocol.chat_response, debug=text, style=emotion,
                             audio_url=os.path.basename(filename), template_id=self.template_id).toStr()
         raise AIBeingException("greeting list is empty")
