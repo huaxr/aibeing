@@ -44,8 +44,8 @@ class AIBeingChatTask(AIBeingBaseTask):
             return self.greeting()
 
         if self.template is None:
-            res = self.proxy(self.chat_list, kwargs["hook"], 0.9, streaming=True)
             self.chat_list.append(self.user_message(inputs))
+            res = self.proxy(self.chat_list, kwargs["hook"], 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
 
@@ -71,8 +71,8 @@ class AIBeingChatTask(AIBeingBaseTask):
             return self.greeting()
 
         if self.template is None:
-            res = await self.async_proxy(self.chat_list, kwargs["hook"], 0.9, streaming=True)
             self.chat_list.append(self.user_message(inputs))
+            res = await self.async_proxy(self.chat_list, kwargs["hook"], 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
 
