@@ -29,7 +29,7 @@ class AIBeingHookAsync(Hook):
 
         self.stream_start_done = False
         self.stream_end_done = False
-        super().__init__(is_pure=self.template_id < 0)
+        super().__init__(is_pure=self.template_id <= 0)
 
     async def stream_chat_token(self, token: str) -> None:
         self.current_sentence += token
@@ -65,7 +65,7 @@ class AIBeingHook(Hook):
 
         self.stream_start_done = False
         self.stream_end_done = False
-        super().__init__(is_pure=self.template_id < 0)
+        super().__init__(is_pure=self.template_id <= 0)
 
     def stream_chat_token(self, token: str) -> None:
         # uuid = str(kwargs["run_id"])
