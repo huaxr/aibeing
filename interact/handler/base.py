@@ -95,9 +95,6 @@ class BaseHandler(object):
         if pt == "chat_req":
             return js["txt"], int(js["template_id"]), False
 
-        if pt == "chat_pure":
-            return js["txt"], -1, False
-
         if pt == protocol.get_greeting or pt == protocol.get_continue_chat:
             return pt, int(js["template_id"]), False
 

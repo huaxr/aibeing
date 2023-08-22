@@ -2,7 +2,6 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import asyncio
-from typing import Any
 from interact.schema.chat import response
 from interact.schema.protocal import protocol
 
@@ -17,6 +16,8 @@ class Hook(object):
 
     async def stream_pure_end(self) -> None: pass
 
+class LCHook():
+    pass
 
 class AIBeingHookAsync(Hook):
     def __init__(self, sock, template_id: int):
