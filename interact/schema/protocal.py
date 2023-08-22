@@ -24,3 +24,4 @@ class protocol:
 
     get_greeting = "get_greeting"
     get_continue_chat = "get_continue_chat"
+    pure_chat = "pure_chat"

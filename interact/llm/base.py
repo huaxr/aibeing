@@ -10,12 +10,11 @@ import aiohttp
 import langchain
 import requests
 from langchain.cache import InMemoryCache
-from langchain.callbacks.base import BaseCallbackHandler
-
 from core.db import get_template_by_id, TemplateModel
 from core.log import logger
 from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
+from interact.llm.hook import Hook
 from interact.llm.template.template import Template, Vector, Voice, FewShot
 
 class AIBeingBaseTask(object):
@@ -104,11 +103,12 @@ class AIBeingBaseTask(object):
         few_shotStruct = FewShot(template_model.few_shot_switch, json.loads(few_shot_content))
         return Template(template_model.id, name, avatar, temperature, model, voiceStruct, vectorStruct, few_shotStruct,
                         prompt, character_prompt)
-    def load_template(self, template_id:int) -> Template:
+    def load_template(self, template_id:int) -> Union[Template, None]:
         # todo: load from cache
         template_model = get_template_by_id(template_id)
         if template_model is None:
-            raise AIBeingException("No template found for id:"+str(template_id))
+            logger.error("No template found for id, may be pure chat:"+str(template_id))
+            return None
         return self.model2template(template_model)
 
     def prepare_header_data(self, messages: List[str], streaming: bool, temperature: float) -> ({}, {}):
@@ -119,10 +119,13 @@ class AIBeingBaseTask(object):
         data = {"messages": messages, "stream": streaming, "temperature": temperature}
         return headers, data
 
-    def proxy(self, messages:List, hook:Union[BaseCallbackHandler,None], temperature:float=0.7, streaming:bool=False) -> str:
+    def proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False) -> str:
         assert len(messages) > 0, "messages length must > 0"
         headers, data = self.prepare_header_data(messages, streaming, temperature)
         if streaming:
+            if hook.is_pure:
+                hook.stream_pure_start()
+
             response = requests.post(self.msai, headers=headers, json=data, stream=True)
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
             res = ""
@@ -130,6 +133,8 @@ class AIBeingBaseTask(object):
                 if line:
                     data_str = line.decode('utf-8')
                     if data_str == "data: [DONE]":
+                        if hook.is_pure:
+                            hook.stream_pure_end()
                         return res
                     json_start = data_str.find('{')
                     json_data = data_str[json_start:]
@@ -138,21 +143,27 @@ class AIBeingBaseTask(object):
                     content = delta.get("content", None)
                     if content:
                         res += content
-                        if hook:
-                            hook.on_llm_new_token(content)
+                        if hook.is_pure:
+                            hook.stream_pure_token(content)
+                        else:
+                            hook.stream_chat_token(content)
         else:
             response = requests.post(self.msai, headers=headers, json=data, stream=False)
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
             res = response.json()["choices"][0]["message"]["content"]
             return res
 
-    async def async_proxy(self, messages:List, hook:Union[BaseCallbackHandler,None], temperature:float=0.7, streaming:bool=False) -> str:
+    async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False) -> str:
         assert len(messages) > 0, "messages length must > 0"
         headers, data = self.prepare_header_data(messages, streaming, temperature)
         async with aiohttp.ClientSession() as session:
             if streaming:
-                # 主动触发一次token更新
-                await hook.on_llm_new_token("{")
+                # 手动触发
+                if hook.is_pure:
+                    await hook.stream_pure_start()
+                else:
+                    await hook.stream_chat_token("{")
+
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"
                     res, buffer = "", b""
@@ -164,6 +175,8 @@ class AIBeingBaseTask(object):
                                 continue
                             data_str = line.decode('utf-8')
                             if data_str.__contains__("[DONE]"):
+                                if hook.is_pure:
+                                    await hook.stream_pure_end()
                                 return res
                             json_start = data_str.find('{')
                             json_data = data_str[json_start:]
@@ -172,8 +185,11 @@ class AIBeingBaseTask(object):
                             content = delta.get("content", None)
                             if content:
                                 res += content
-                                if hook:
-                                    await hook.on_llm_new_token(content)
+                                if hook.is_pure:
+                                    await hook.stream_pure_token(content)
+                                else:
+                                    await hook.stream_chat_token(content)
+
             else:
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, "proxy status code is: {}".format(response.status)
@@ -186,7 +202,6 @@ class AIBeingBaseTask(object):
         return {"role": "user", "content": content}
     def ai_message(self, content) -> dict:
         return {"role": "assistant", "content": content}
-
 
     def call_ms(self, text, voice: Voice, emotion: str) -> str:
         if not voice.switch:
@@ -201,7 +216,3 @@ class AIBeingBaseTask(object):
         filename = self.text2speech.save_path + ".".join(["aib", str(time.time()), "mp3"])
         await self.text2speech.async_text2audio(voice.style, emotion, text, filename)
         return filename
-
-if __name__ == "__main__":
-    a = AIBeingBaseTask("", 0)
-    a.get_json("""{\"reply\": 你好，我是小爱, "emotion": "chat"}}""")

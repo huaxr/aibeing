@@ -25,7 +25,7 @@ class FewShot:
         self.content = content
 
 class Template:
-    def __init__(self, id: int, name: str, avatar: str, temperature: float, model:str, voice: Voice, vector: Vector, few_shot: FewShot, prompt: str, character_prompt:str):
+    def __init__(self, id: int = None, name: str = None, avatar: str = None, temperature: float = None, model:str = None, voice: Voice = None, vector: Vector = None, few_shot: FewShot = None, prompt: str = None, character_prompt:str = None):
         self.id = id
         self.name = name
         self.avatar = avatar

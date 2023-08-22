@@ -50,9 +50,12 @@ class WSServer(object):
                 if len(data) == 0:
                     await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
                     continue
-                if task is None or (template_id > 0 and template_id != current_template_id):
+
+                # when pure chat, template_id is -1
+                if task is None or template_id != current_template_id:
                     current_template_id = template_id
                     task = AIBeingChatTask(session_id, template_id, self.audiotrans)
+
                 aiSay = await task.async_generate(data, hook=AIBeingHookAsync(websocket, template_id))
                 await websocket.send(aiSay)
 
@@ -105,7 +108,7 @@ class WSServer(object):
             if len(data) == 0:
                 await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
                 continue
-            if task is None or (template_id > 0 and template_id != current_template_id):
+            if task is None or template_id != current_template_id:
                 current_template_id = template_id
                 task = AIBeingChatTask(session_id, template_id, self.audiotrans)
             aiSay = task.generate(data, hook=AIBeingHook(token_queue, template_id))

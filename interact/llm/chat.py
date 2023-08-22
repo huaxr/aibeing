@@ -21,13 +21,14 @@ from interact.llm.base import AIBeingBaseTask
 from interact.schema.chat import response
 from interact.schema.protocal import protocol
 from interact.llm.template import chat, analyze
-from interact.llm.template.template import  Vector, Voice
+from interact.llm.template.template import  Vector
 from interact.llm.vector.client import VectorDB
 class AIBeingChatTask(AIBeingBaseTask):
     def  __init__(self, uid: str, template_id: int, text2speech: AudioTransform):
         self.template = self.load_template(template_id)
-        self.encoding = tiktoken.encoding_for_model(self.get_model_name(self.template.get_model()))
-        self.chat_list: List[Dict] = [self.system_message("AIB")]
+        if self.template is not None:
+            self.encoding = tiktoken.encoding_for_model(self.get_model_name(self.template.get_model()))
+        self.chat_list: List[Dict] = [self.system_message("你是一个聊天机器人")]
         self.uid = uid
         self.template_id = template_id
         self.vector = VectorDB(config.llm_type)
@@ -41,6 +42,12 @@ class AIBeingChatTask(AIBeingBaseTask):
     def generate(self, inputs, **kwargs) -> Any:
         if inputs == protocol.get_greeting:
             return self.greeting()
+
+        if self.template is None:
+            res = self.proxy(self.chat_list, kwargs["hook"], 0.9, streaming=True)
+            self.chat_list.append(self.user_message(inputs))
+            self.chat_list.append(self.ai_message(res))
+            return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
 
         start = time.time()
         contexts = self.similarity(inputs, self.template.vec)
@@ -62,6 +69,12 @@ class AIBeingChatTask(AIBeingBaseTask):
     async def async_generate(self, inputs, **kwargs) -> Any:
         if inputs == protocol.get_greeting:
             return self.greeting()
+
+        if self.template is None:
+            res = await self.async_proxy(self.chat_list, kwargs["hook"], 0.9, streaming=True)
+            self.chat_list.append(self.user_message(inputs))
+            self.chat_list.append(self.ai_message(res))
+            return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
 
         self.chat_list.append(self.user_message(inputs))
 
@@ -112,7 +125,6 @@ class AIBeingChatTask(AIBeingBaseTask):
         assert len(res) > 0, "analyze result is empty"
         res = res.replace("\n", "")
         return self.get_json(res)
-
     def get_system_template(self, prompt, vec_context, _future, lang="en"):
         buffer = io.StringIO()
         v, a, i = "corpus_template", "analyze_template", "introduction_template"
@@ -198,7 +210,6 @@ class AIBeingChatTask(AIBeingBaseTask):
         dic = self.handler_analyze_result(res)
         assert isinstance(dic, dict)
         return getattr(analyze, "generate_analyze_prompt", None)(dic)
-
 
     def get_chat_history(self) -> str:
         messages = []

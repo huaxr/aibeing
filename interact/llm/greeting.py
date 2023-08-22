@@ -36,6 +36,7 @@ class AIBeingGreetingTask(AIBeingBaseTask):
         prompt = greeting_template.format(current_time=self.get_current_time()).replace("###", temp)
         res = self.proxy([self.system_message(prompt)], None, self.template.temperature, False)
         greeting_list = json.loads(res)
+        assert isinstance(greeting_list, list), "Greeting list should be a list"
         values = []
         emotion = "excited"
         for i in greeting_list:
