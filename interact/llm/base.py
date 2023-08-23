@@ -119,15 +119,16 @@ class AIBeingBaseTask(object):
             "api-key": self.msai_key
         }
 
-        if len(functions) > 0:
-            streaming = False
+        streaming = False if functions else streaming
+        data = {"messages": messages, "stream": streaming, "temperature": temperature}
+        if functions:
+            data["functions"] = functions
 
-        data = {"messages": messages, "stream": streaming, "temperature": temperature, "functions": functions}
         return headers, data, streaming
 
     def proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False, functions: List=None) ->  Any:
         assert len(messages) > 0, "messages length must > 0"
-        if len(functions) > 0:
+        if functions:
             temperature = 0.03
         headers, data, streaming = self.prepare_header_data(messages, streaming, temperature, functions)
         if streaming:
@@ -159,7 +160,7 @@ class AIBeingBaseTask(object):
             response = requests.post(self.msai, headers=headers, json=data, stream=False)
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
             response_message = response.json()
-            if len(functions) > 0 and response_message["choices"][0]["finish_reason"] == "function_call":
+            if functions and response_message["choices"][0]["finish_reason"] == "function_call":
                 call_res = response_message["choices"][0]["message"]
                 function_call_dict = call_res["function_call"]
                 function_name = function_call_dict["name"]
