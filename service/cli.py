@@ -17,7 +17,7 @@ async def heartbeat(websocket):
             break
 async def send_message():
     # wss://inschool.life/websocket
-    async with websockets.connect('ws://127.0.0.1:8888', ping_interval=None) as websocket:
+    async with websockets.connect('ws://127.0.0.1:8821', ping_interval=None) as websocket:
         asyncio.create_task(heartbeat(websocket))
 
         while True:

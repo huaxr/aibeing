@@ -20,9 +20,10 @@ from interact.llm.exception import AIBeingException
 from interact.llm.base import AIBeingBaseTask
 from interact.schema.chat import response
 from interact.schema.protocal import protocol
-from interact.llm.template import chat, analyze
+from interact.llm.template import chat, analyze, codecot
 from interact.llm.template.template import  Vector
 from interact.llm.vector.client import VectorDB
+from interact.llm.functions import functions
 class AIBeingChatTask(AIBeingBaseTask):
     def  __init__(self, uid: str, template_id: int, text2speech: AudioTransform):
         self.template = self.load_template(template_id)
@@ -39,13 +40,29 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._wait_analyze_times = 0
         super().__init__(text2speech)
 
+    def codeinterpreter(self, inputs):
+        sys = self.system_message(codecot.codeinterpreter_system)
+        user = self.user_message(codecot.codeinterpreter_user.format(user_input=inputs, upload_file="/tmp/iris.csv"))
+        self.chat_list[0] = sys
+        self.chat_list.append(user)
+        res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
+
+        while 1:
+            content = res.pop("content")
+            result = res.pop("result")
+            ai = self.ai_message(content, res)
+            func = self.func_message(res, result)
+            self.chat_list.append(ai)
+            self.chat_list.append(func)
+            res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
+            print(res)
     def generate(self, inputs, **kwargs) -> Any:
         if inputs == protocol.get_greeting:
             return self.greeting()
 
         if self.template is None:
             self.chat_list.append(self.user_message(inputs))
-            res = self.proxy(self.chat_list, kwargs["hook"], 0.9, streaming=True)
+            res = self.proxy(self.chat_list[-8:], kwargs["hook"], 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
 

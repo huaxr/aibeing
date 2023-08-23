@@ -16,13 +16,15 @@ from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
 from interact.llm.hook import Hook
 from interact.llm.template.template import Template, Vector, Voice, FewShot
+from interact.llm.functions import available_functions
 
 class AIBeingBaseTask(object):
 
     def __init__(self, text2speech: AudioTransform):
         self.text2speech = text2speech
         self.rds_greeting_key = "{id}-{name}-greeting"
-        self.msai = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15"
+        self.msai = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-07-01-preview"
+        # self.msai = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15"
         self.msai_key = os.environ.get("PROXY_KEY")
 
     def generate(self, *args, **kwargs) -> Any:
@@ -111,17 +113,23 @@ class AIBeingBaseTask(object):
             return None
         return self.model2template(template_model)
 
-    def prepare_header_data(self, messages: List[str], streaming: bool, temperature: float) -> ({}, {}):
+    def prepare_header_data(self, messages: List[str], streaming: bool, temperature: float, functions: List = None) -> ({}, {}, bool):
         headers = {
             "Content-Type": "application/json",
             "api-key": self.msai_key
         }
-        data = {"messages": messages, "stream": streaming, "temperature": temperature}
-        return headers, data
 
-    def proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False) -> str:
+        if len(functions) > 0:
+            streaming = False
+
+        data = {"messages": messages, "stream": streaming, "temperature": temperature, "functions": functions}
+        return headers, data, streaming
+
+    def proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False, functions: List=None) ->  Any:
         assert len(messages) > 0, "messages length must > 0"
-        headers, data = self.prepare_header_data(messages, streaming, temperature)
+        if len(functions) > 0:
+            temperature = 0.03
+        headers, data, streaming = self.prepare_header_data(messages, streaming, temperature, functions)
         if streaming:
             if hook.is_pure:
                 hook.stream_pure_start()
@@ -150,12 +158,24 @@ class AIBeingBaseTask(object):
         else:
             response = requests.post(self.msai, headers=headers, json=data, stream=False)
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
-            res = response.json()["choices"][0]["message"]["content"]
+            response_message = response.json()
+            if len(functions) > 0 and response_message["choices"][0]["finish_reason"] == "function_call":
+                call_res = response_message["choices"][0]["message"]
+                function_call_dict = call_res["function_call"]
+                function_name = function_call_dict["name"]
+                code = json.loads(function_call_dict["arguments"])["code"]
+                callable = available_functions[function_name]
+                result = callable(code)
+                call_res["result"] = result
+                call_res["name"] = function_name
+                return call_res
+
+            res = response_message["choices"][0]["message"]["content"]
             return res
 
     async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False) -> str:
         assert len(messages) > 0, "messages length must > 0"
-        headers, data = self.prepare_header_data(messages, streaming, temperature)
+        headers, data, streaming = self.prepare_header_data(messages, streaming, temperature)
         async with aiohttp.ClientSession() as session:
             if streaming:
                 # 手动触发
@@ -200,8 +220,10 @@ class AIBeingBaseTask(object):
         return {"role": "system", "content": content}
     def user_message(self, content) -> dict:
         return {"role": "user", "content": content}
-    def ai_message(self, content) -> dict:
-        return {"role": "assistant", "content": content}
+    def ai_message(self, content, function_call = None) -> dict:
+        return {"role": "assistant", "content": content, "function_call": function_call}
+    def func_message(self, content, call_name) -> dict:
+        return {"role": "function", "content": content, "name":call_name}
 
     def call_ms(self, text, voice: Voice, emotion: str) -> str:
         if not voice.switch:
