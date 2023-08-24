@@ -37,6 +37,7 @@ def python_handler(code):
         return AIBeingException("Error running IPython code: {}".format(e))
 
 codebox = CodeBox()
+codebox.start()
 start = False
 # 不能关闭 shell， 否则交互式变量丢失
 # codebox.stop()
