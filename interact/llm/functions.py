@@ -46,9 +46,8 @@ def ipython_handler(code) -> CodeBoxOutput:
     if not start:
         codebox.start()
         start = True
-    box = CodeBox.from_id(codebox.session_id)
-    assert box.status() == "running", "CodeBox is not running"
-    result = box.run(code)
+    assert codebox.status() == "running", "CodeBox is not running"
+    result = codebox.run(code)
     return result
 
 async def async_ipython_handler(code) -> CodeBoxOutput:
