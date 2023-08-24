@@ -55,6 +55,9 @@ class Config:
     @property
     def audio_upload_path(self) -> str:
         return self.data["audio"]["upload_path"]
+    @property
+    def image_path(self) -> str:
+        return self.data["audio"]["image_path"]
 
     @property
     def vector_host(self) -> str:

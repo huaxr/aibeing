@@ -2,6 +2,8 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import json
+from typing import Any
+
 from core.conf import config
 from interact.handler.base import BaseHandler
 from interact.handler.voice.microsoft import AudioTransform
@@ -12,7 +14,7 @@ class StreamHandler(BaseHandler):
     def __init__(self, audiotrans: AudioTransform=None):
         super().__init__(audiotrans)
 
-    def on_message(self, message) -> (str, int, bool, str):
+    def on_message(self, message) -> (Any, int, bool, str):
         try:
             js = json.loads(message)
         except:

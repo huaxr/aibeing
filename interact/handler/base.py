@@ -2,6 +2,8 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import json
+from typing import Any
+
 from core.conf import config
 from core.db import TemplateModel, create_template, get_template_list, get_template_by_id, update_template, update_chat_like, update_chat_unlike
 from interact.handler.voice.microsoft import AudioTransform
@@ -76,8 +78,12 @@ class BaseHandler(object):
                               few_shot_content=few_shot_content,
                               prompt=prompt, character_prompt=character_prompt)
 
-    def process(self, js:{}) -> (str, int, bool, str):
+    def process(self, js:{}) -> (Any, int, bool, str):
         pt = js["pt"]
+
+        if pt == "chat_thinking":
+            dic = json.loads(js["txt"])
+            return dic, int(js["template_id"]), False, ""
 
         if pt == "login":
             session_id = js["txt"]

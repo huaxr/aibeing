@@ -1,15 +1,18 @@
 # -*- coding: utf-8 -*-
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
+import base64
 import json
 import os
 import time
+from io import BytesIO
 from typing import Any, Union, List
 
 import aiohttp
 import langchain
 import requests
 import tiktoken
+from PIL import Image
 from langchain.cache import InMemoryCache
 
 from core.conf import config
@@ -135,7 +138,99 @@ class AIBeingBaseTask(object):
             data["functions"] = functions
 
         return headers, data, streaming
+    def agent(self, response_message:dict) -> dict:
+        reason = response_message["choices"][0]["finish_reason"]
+        if reason == "function_call":
+            call_res = response_message["choices"][0]["message"]
 
+            # get exec result
+            function_call_dict = call_res["function_call"]
+            function_name = function_call_dict["name"]
+            arguments = function_call_dict["arguments"]
+            try:
+                arguments_dic = json.loads(arguments)
+                code = arguments_dic["code"]
+            except Exception:
+                logger.error(f"arguments is not dict: {arguments}")
+                code = arguments
+
+            logger.info("generate code:\n" + code)
+            callable = available_functions[function_name]
+            exec_result = callable(code)
+            if exec_result.type == "image/png":
+                logger.info("image received")
+                image_bytes = base64.b64decode(exec_result.content)
+                # 将字节数据转换为 Image 对象（使用 Pillow 库）
+                image = Image.open(BytesIO(image_bytes))
+                # 保存图片到文件
+                file = "{}output_image.{}.png".format(config.image_path, time.time())
+                image.save(file, "PNG")
+                call_res["exec_result"] = file
+
+            elif exec_result.type == "text":
+                logger.info("exec result:{}".format(exec_result.content))
+                call_res["exec_result"] = exec_result.content
+
+            elif exec_result.type == "error":
+                logger.error("exec error:{}".format(exec_result.content))
+                call_res["exec_result"] = exec_result.content
+
+            else:
+                raise RuntimeError("unknown exec result type:" + exec_result.type)
+            call_res["exec_type"] = exec_result.type
+            return call_res
+        elif reason == "stop":  # cot end
+            return {"exec_type": "stop"}
+
+        else:
+            raise RuntimeError("unknown function call reason:" + reason)
+
+    async def async_agent(self, response_message: dict) -> dict:
+        reason = response_message["choices"][0]["finish_reason"]
+        if reason == "function_call":
+            call_res = response_message["choices"][0]["message"]
+
+            # get exec result
+            function_call_dict = call_res["function_call"]
+            function_name = function_call_dict["name"]
+            arguments = function_call_dict["arguments"]
+            try:
+                arguments_dic = json.loads(arguments)
+                code = arguments_dic["code"]
+            except Exception:
+                logger.error(f"arguments is not dict: {arguments}")
+                code = arguments
+
+            logger.info("generate code:\n" + code)
+            callable = available_functions[function_name + "_async"]
+            exec_result = await callable(code)
+            if exec_result.type == "image/png":
+                logger.info("image received")
+                image_bytes = base64.b64decode(exec_result.content)
+                # 将字节数据转换为 Image 对象（使用 Pillow 库）
+                image = Image.open(BytesIO(image_bytes))
+                # 保存图片到文件
+                file = "{}output_image.{}.png".format(config.image_path, time.time())
+                image.save(file, "PNG")
+                call_res["exec_result"] = file
+
+            elif exec_result.type == "text":
+                logger.info("exec result:{}".format(exec_result.content))
+                call_res["exec_result"] = exec_result.content
+
+            elif exec_result.type == "error":
+                logger.error("exec error:{}".format(exec_result.content))
+                call_res["exec_result"] = exec_result.content
+
+            else:
+                raise RuntimeError("unknown exec result type:" + exec_result.type)
+            call_res["exec_type"] = exec_result.type
+            return call_res
+        elif reason == "stop":  # cot end
+            return {"exec_type": "stop"}
+
+        else:
+            raise RuntimeError("unknown function call reason:" + reason)
     def proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False, functions: List=None) ->  Any:
         assert len(messages) > 0, "messages length must > 0"
         if functions:
@@ -184,44 +279,18 @@ class AIBeingBaseTask(object):
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
             response_message = response.json()
             if functions:
-                reason =  response_message["choices"][0]["finish_reason"]
-                if reason == "function_call":
-                    call_res = response_message["choices"][0]["message"]
-
-                    # get exec result
-                    function_call_dict = call_res["function_call"]
-                    function_name = function_call_dict["name"]
-                    arguments = function_call_dict["arguments"]
-                    try:
-                        arguments_dic = json.loads(arguments)
-                        code = arguments_dic["code"]
-                    except Exception:
-                        logger.error(f"arguments is not dict: {arguments}")
-                        code = arguments
-
-                    logger.info("generate code:\n"+code)
-                    callable = available_functions[function_name]
-                    exec_result = callable(code)
-                    logger.info("exec result:\n"+exec_result)
-                    call_res["exec_result"] = exec_result
-                    return call_res
-                elif reason == "stop":  #cot end
-                    logger.info("cot end")
-                    return
-
-                else:
-                    raise RuntimeError("unknown function call reason:"+reason)
+                return self.agent(response_message)
 
             res = response_message["choices"][0]["message"]["content"]
             return res
 
-    async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False) -> str:
+    async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False, functions: List=None) -> Any:
         assert len(messages) > 0, "messages length must > 0"
         token_count = self._tokens(messages)
         if token_count > config.llm_msai_max_token:
             messages = messages[2:]
 
-        headers, data, streaming = self.prepare_header_data(messages, streaming, temperature)
+        headers, data, streaming = self.prepare_header_data(messages, streaming, temperature, functions)
         async with aiohttp.ClientSession() as session:
             if streaming:
                 # 手动触发
@@ -267,6 +336,9 @@ class AIBeingBaseTask(object):
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, "proxy status code is: {}".format(response.status)
                     json_response = await response.json()
+                    if functions:
+                        res = await self.async_agent(json_response)
+                        return res
                     return json_response["choices"][0]["message"]["content"]
 
     def system_message(self, content) -> dict:

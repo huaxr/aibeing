@@ -25,6 +25,7 @@ llm:
 audio:
   upload_path: "/var/www/uploads/"
   save_path: /usr/share/nginx/html/sounds/
+  image_path: /usr/share/nginx/html/images/
 
 vector:
   mode: "server"

@@ -26,3 +26,9 @@ class protocol:
     get_greeting = "get_greeting"
     get_continue_chat = "get_continue_chat"
     pure_chat = "pure_chat"
+
+    thinking_now = "thinking_now"
+    thinking_error = "thinking_error"
+    thinking_image = "thinking_image"
+    thinking_stop = "thinking_stop"
+

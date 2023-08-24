@@ -25,6 +25,8 @@ llm:
 audio:
   upload_path: "/tmp/"
   save_path: /tmp/
+  image_path: /tmp/
+
 
 
 vector:

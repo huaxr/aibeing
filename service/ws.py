@@ -47,14 +47,13 @@ class WSServer(object):
                 data, template_id, responseDirectly, session = await self.handler.async_on_message(message)
                 if session:
                     session_id = session
-                data = data.toStr() if isinstance(data, response) else str(data)
                 if responseDirectly:
+                    data = data.toStr() if isinstance(data, response) else str(data)
                     await websocket.send(data)
                     continue
                 if len(data) == 0:
                     await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
                     continue
-
                 # when pure chat, template_id is -1
                 if task is None or template_id != current_template_id:
                     current_template_id = template_id
@@ -111,8 +110,8 @@ class WSServer(object):
                 if session:
                     session_id = session
 
-                data = data.toStr() if isinstance(data, response) else str(data)
                 if responseDirectly:
+                    data = data.toStr() if isinstance(data, response) else str(data)
                     await websocket.send(data)
                     continue
                 if len(data) == 0:
@@ -124,7 +123,7 @@ class WSServer(object):
                         sessions[session_id] = AIBeingChatTask(session_id, template_id, self.audiotrans)
                 assert session_id in sessions, AIBeingException("session_id not in sessions")
                 aiSay = sessions[session_id].generate(data, hook=AIBeingHook(token_queue, template_id))
-                # aiSay = task.codeinterpreter(data)
+                # aiSay = sessions[session_id].codeinterpreter(data, "")
                 await websocket.send(aiSay)
             except Exception as e:
                 if isinstance(e, WebSocketException):
