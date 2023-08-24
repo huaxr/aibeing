@@ -136,7 +136,10 @@ class AIBeingBaseTask(object):
                 hook.stream_pure_start()
 
             response = requests.post(self.msai, headers=headers, json=data, stream=True)
-            assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
+            if  response.status_code != 200:
+                logger.error("response str: {}".format(response.text))
+                raise AIBeingException("proxy status code is: {}".format(response.status_code))
+
             res = ""
             for chunk in response.iter_lines(chunk_size=1024):
                 if chunk:
@@ -165,16 +168,34 @@ class AIBeingBaseTask(object):
             response = requests.post(self.msai, headers=headers, json=data, stream=False)
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
             response_message = response.json()
-            if functions and response_message["choices"][0]["finish_reason"] == "function_call":
-                call_res = response_message["choices"][0]["message"]
-                function_call_dict = call_res["function_call"]
-                function_name = function_call_dict["name"]
-                code = json.loads(function_call_dict["arguments"])["code"]
-                callable = available_functions[function_name]
-                result = callable(code)
-                call_res["result"] = result
-                call_res["name"] = function_name
-                return call_res
+            if functions:
+                reason =  response_message["choices"][0]["finish_reason"]
+                if reason == "function_call":
+                    call_res = response_message["choices"][0]["message"]
+
+                    # get exec result
+                    function_call_dict = call_res["function_call"]
+                    function_name = function_call_dict["name"]
+                    arguments = function_call_dict["arguments"]
+                    try:
+                        arguments_dic = json.loads(arguments)
+                        code = arguments_dic["code"]
+                    except Exception:
+                        logger.error(f"arguments is not dict: {arguments}")
+                        code = arguments
+
+                    logger.info("generate code:\n"+code)
+                    callable = available_functions[function_name]
+                    exec_result = callable(code)
+                    logger.info("exec result:\n"+exec_result)
+                    call_res["exec_result"] = exec_result
+                    return call_res
+                elif reason == "stop":  #cot end
+                    logger.info("cot end")
+                    return
+
+                else:
+                    raise RuntimeError("unknown function call reason:"+reason)
 
             res = response_message["choices"][0]["message"]["content"]
             return res
@@ -234,12 +255,20 @@ class AIBeingBaseTask(object):
     def user_message(self, content) -> dict:
         return {"role": "user", "content": content}
     def ai_message(self, content, function_call = None) -> dict:
+        """ {
+              'role': 'assistant',
+              'content': '好的，首先我们需要加载数据并查看其内容。让我们使用 pandas 库来完成这个任务。',
+              'function_call': {'name': 'python', 'arguments': '{\n"code": "import pandas as pd\\n\\n# Load the data\\niris = pd.read_csv(\'iris.csv\')\\n\\n# Display the first few rows of the data\\niris.head()"\n}'}
+            }
+        """
         dic = {"role": "assistant", "content": content}
         if function_call:
             dic["function_call"] = function_call
         return dic
-    def func_message(self, content, call_name) -> dict:
-        return {"role": "function", "content": content, "name":call_name}
+
+    def func_message(self, content, name) -> dict:
+        """ {'role': 'function', 'content': 'function result', 'name': 'python'}"""
+        return {"role": "function", "content": content, "name":name}
 
     def call_ms(self, text, voice: Voice, emotion: str) -> str:
         if not voice.switch:

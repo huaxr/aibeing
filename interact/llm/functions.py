@@ -28,11 +28,32 @@ functions = [
 def python_handler(code):
     try:
         result = subprocess.run(['ipython', '-c', code], check=True, capture_output=True, text=True)
-        return result.stdout
+        out = result.stdout
+        out = out.replace("Out[1]:", "").strip()
+        return out
     except subprocess.CalledProcessError as e:
         return AIBeingException("Error running IPython code: {}".format(e))
+    return exec(code)
 
 
 available_functions = {
     "python": python_handler,
 }
+
+if __name__ == '__main__':
+    code = """
+import pandas as pd
+import matplotlib.pyplot as plt
+# 读取数据
+data = pd.read_csv('/tmp/iris.csv')
+# 计算每个类别的数量
+class_counts = data['class'].value_counts()
+# 生成饼状图
+plt.figure(figsize=(10, 6))
+plt.pie(class_counts, labels=class_counts.index, autopct='%1.1f%%')
+plt.title('Iris Classes Distribution')
+plt.savefig('/tmp/iris_classes_distribution.png')
+print('/tmp/iris_classes_distribution.png')
+    """
+    res = exec(code)
+    print(res)

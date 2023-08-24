@@ -41,21 +41,26 @@ class AIBeingChatTask(AIBeingBaseTask):
         super().__init__(text2speech)
 
     def codeinterpreter(self, inputs):
-        sys = self.system_message(codecot.codeinterpreter_system)
+        sys = self.system_message(codecot.codeinterpreter_system.format(file_path="/tmp"))
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=inputs, upload_file="/tmp/iris.csv"))
         self.chat_list[0] = sys
         self.chat_list.append(user)
-        res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
-
+        res = self.proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
+        if isinstance(res, str):
+            return
         while 1:
             content = res.pop("content")
-            result = res.pop("result")
-            ai = self.ai_message(content, res)
-            func = self.func_message(res, result)
+            result = res.pop("exec_result")
+            function_call = res.pop("function_call")
+            name = function_call["name"]
+
+            ai = self.ai_message(content, function_call)
+            func = self.func_message(result, name)
             self.chat_list.append(ai)
             self.chat_list.append(func)
             res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
-            print(res)
+            if res is None:
+                return
     def generate(self, inputs, **kwargs) -> Any:
         if inputs == protocol.get_greeting:
             return self.greeting()
