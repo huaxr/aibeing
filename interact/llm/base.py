@@ -235,7 +235,10 @@ class AIBeingBaseTask(object):
     def user_message(self, content) -> dict:
         return {"role": "user", "content": content}
     def ai_message(self, content, function_call = None) -> dict:
-        return {"role": "assistant", "content": content, "function_call": function_call}
+        dic = {"role": "assistant", "content": content}
+        if function_call:
+            dic["function_call"] = function_call
+        return dic
     def func_message(self, content, call_name) -> dict:
         return {"role": "function", "content": content, "name":call_name}
 
