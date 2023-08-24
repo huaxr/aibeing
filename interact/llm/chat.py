@@ -124,6 +124,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         hook = kwargs["hook"]
         # codeinterpreter
         if isinstance(inputs, dict):
+            print("1111111111111")
             content = inputs["content"]
             file = inputs["file"]
             return await self.async_codeinterpreter(content, file, hook.sock)
