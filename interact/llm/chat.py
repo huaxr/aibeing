@@ -69,7 +69,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
-        res = self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
+        res = await self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
         while 1:
             logger.info(res)
             logger.info(33333333333)
