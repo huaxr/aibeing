@@ -180,6 +180,7 @@ class AIBeingBaseTask(object):
             call_res["exec_type"] = exec_result.type
             return call_res
         elif reason == "stop":  # cot end
+            logger.info(response_message)
             return {"exec_type": "stop"}
 
         else:
@@ -290,7 +291,6 @@ class AIBeingBaseTask(object):
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, "proxy status code is: {}".format(response.status)
                     json_response = await response.json()
-                    logger.error("xxxxxxxxxxxxxxxxxx")
                     if functions:
                         res = self.agent(json_response)
                         return res
