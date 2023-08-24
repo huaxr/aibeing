@@ -54,7 +54,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             if typ == "error":
                 return response(protocol=protocol.thinking_error, debug="思考过程出错:{}\n".format(content), template_id=self.template_id).toStr()
             if typ == "image/png":
-                sock.send(response(protocol=protocol.thinking_image, debug=result.strip(), template_id=self.template_id).toStr())
+                sock.send(response(protocol=protocol.thinking_image, debug=result, template_id=self.template_id).toStr())
             function_call = res.pop("function_call")
             name = function_call["name"]
             ai = self.ai_message(content, function_call)
@@ -82,7 +82,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             if typ == "error":
                 return response(protocol=protocol.thinking_error, debug="思考过程出错:{}\n".format(content), template_id=self.template_id).toStr()
             if typ == "image/png":
-                await sock.send(response(protocol=protocol.thinking_image, debug=result.strip(), template_id=self.template_id).toStr())
+                await sock.send(response(protocol=protocol.thinking_image, debug=result, template_id=self.template_id).toStr())
             function_call = res.pop("function_call")
             name = function_call["name"]
             ai = self.ai_message(content, function_call)
