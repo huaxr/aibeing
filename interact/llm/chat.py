@@ -37,9 +37,9 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._wait_analyze_times = 0
         super().__init__(text2speech)
 
-    def codeinterpreter(self, inputs, file, sock):
+    def codeinterpreter(self, user_input, file, sock):
         sys = self.system_message(codecot.codeinterpreter_system)
-        user = self.user_message(codecot.codeinterpreter_user.format(user_input=inputs, upload_file=file))
+        user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
         res = self.proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
@@ -63,9 +63,9 @@ class AIBeingChatTask(AIBeingBaseTask):
             self.chat_list.append(func)
             res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
 
-    async def async_codeinterpreter(self, content, file, sock):
+    async def async_codeinterpreter(self, user_input, file, sock):
         sys = self.system_message(codecot.codeinterpreter_system)
-        user = self.user_message(codecot.codeinterpreter_user.format(user_input=content, upload_file=file))
+        user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
         res = self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
@@ -91,19 +91,19 @@ class AIBeingChatTask(AIBeingBaseTask):
     def generate(self, inputs, **kwargs) -> Any:
         hook = kwargs["hook"]
         if isinstance(inputs, dict):
-            content = inputs["text"]
+            content = inputs["content"]
             file = inputs["file"]
             return self.codeinterpreter(content, file, hook.sock)
 
-        if inputs == protocol.get_greeting:
-            return self.greeting()
-
         if self.template is None:
             self.chat_list.append(self.user_message(inputs))
-            res = self.proxy(self.chat_list[-8:], kwargs["hook"], 0.9, streaming=True)
+            res = self.proxy(self.chat_list[-8:], hook, 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
             return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
+
+        if inputs == protocol.get_greeting:
+            return self.greeting()
 
         start = time.time()
         contexts = self.similarity(inputs, self.template.vec)
@@ -121,20 +121,21 @@ class AIBeingChatTask(AIBeingBaseTask):
 
     async def async_generate(self, inputs, **kwargs) -> Any:
         hook = kwargs["hook"]
+        # codeinterpreter
         if isinstance(inputs, dict):
-            content = inputs["text"]
+            content = inputs["content"]
             file = inputs["file"]
             return await self.async_codeinterpreter(content, file, hook.sock)
-
-        if inputs == protocol.get_greeting:
-            return self.greeting()
-
+        # pure chat
         if self.template is None:
             self.chat_list.append(self.user_message(inputs))
             res = await self.async_proxy(self.chat_list, hook, 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
             return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
+        # chat
+        if inputs == protocol.get_greeting:
+            return self.greeting()
 
         self.chat_list.append(self.user_message(inputs))
 
