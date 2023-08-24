@@ -140,9 +140,8 @@ class AIBeingBaseTask(object):
         return headers, data, streaming
     def agent(self, response_message:dict) -> dict:
         reason = response_message["choices"][0]["finish_reason"]
+        call_res = response_message["choices"][0]["message"]
         if reason == "function_call":
-            call_res = response_message["choices"][0]["message"]
-
             # get exec result
             function_call_dict = call_res["function_call"]
             function_name = function_call_dict["name"]
@@ -180,8 +179,7 @@ class AIBeingBaseTask(object):
             call_res["exec_type"] = exec_result.type
             return call_res
         elif reason == "stop":  # cot end
-            logger.info(response_message)
-            return {"exec_type": "stop"}
+            return {"exec_type": "stop", "exec_result": call_res["content"]}
 
         else:
             raise RuntimeError("unknown function call reason:" + reason)

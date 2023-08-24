@@ -71,10 +71,10 @@ class AIBeingChatTask(AIBeingBaseTask):
         res = await self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
         while 1:
             typ = res.pop("exec_type")
-            if typ == "stop":
-                return response(protocol=protocol.thinking_stop, debug="思考完成", template_id=self.template_id).toStr()
-            content = res.pop("content")
             result = res.pop("exec_result")
+            if typ == "stop":
+                return response(protocol=protocol.thinking_stop, debug=result, template_id=self.template_id).toStr()
+            content = res.pop("content")
             if typ == "text":
                 await sock.send(response(protocol=protocol.thinking_now, debug="思考:{}\n".format(content.strip()), template_id=self.template_id).toStr())
             if typ == "error":
