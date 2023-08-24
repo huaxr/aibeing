@@ -182,6 +182,7 @@ class AIBeingBaseTask(object):
     async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False) -> str:
         assert len(messages) > 0, "messages length must > 0"
         headers, data, streaming = self.prepare_header_data(messages, streaming, temperature)
+        logger.info(f"async proxy data: {data}")
         async with aiohttp.ClientSession() as session:
             if streaming:
                 # 手动触发
@@ -194,7 +195,9 @@ class AIBeingBaseTask(object):
                     assert response.status == 200, f"proxy status code is: {response.status}"
                     res, buffer = "", b""
                     async for chunk in response.content.iter_any():
-                        logger.info(f"chunk: {chunk}")
+                        if b'"error":' in chunk:
+                            raise AIBeingException("streaming error from msai")
+
                         buffer += chunk
                         while b"\n\n" in buffer:
                             line, buffer = buffer.split(b"\n\n", 1)
