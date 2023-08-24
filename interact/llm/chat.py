@@ -50,9 +50,9 @@ class AIBeingChatTask(AIBeingBaseTask):
             content = res.pop("content")
             result = res.pop("exec_result")
             if typ == "text":
-                sock.send(response(protocol=protocol.thinking_now, debug="思考:{}\n".format(content.strip()), template_id=self.template_id).toStr())
+                sock.send(response(protocol=protocol.thinking_now, debug="思考:{}\n".format(content), template_id=self.template_id).toStr())
             if typ == "error":
-                return response(protocol=protocol.thinking_error, debug="思考过程出错:{}\n".format(content.strip()), template_id=self.template_id).toStr()
+                return response(protocol=protocol.thinking_error, debug="思考过程出错:{}\n".format(content), template_id=self.template_id).toStr()
             if typ == "image/png":
                 sock.send(response(protocol=protocol.thinking_image, debug=result.strip(), template_id=self.template_id).toStr())
             function_call = res.pop("function_call")
@@ -69,6 +69,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         self.chat_list[0] = sys
         self.chat_list.append(user)
         res = await self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
+        logger.info("async_codeinterpreter:{}".format(res))
         while 1:
             typ = res.pop("exec_type")
             result = res.pop("exec_result")
@@ -76,9 +77,9 @@ class AIBeingChatTask(AIBeingBaseTask):
                 return response(protocol=protocol.thinking_stop, debug=result, template_id=self.template_id).toStr()
             content = res.pop("content")
             if typ == "text":
-                await sock.send(response(protocol=protocol.thinking_now, debug="思考:{}\n".format(content.strip()), template_id=self.template_id).toStr())
+                await sock.send(response(protocol=protocol.thinking_now, debug="思考:{}\n".format(content), template_id=self.template_id).toStr())
             if typ == "error":
-                return response(protocol=protocol.thinking_error, debug="思考过程出错:{}\n".format(content.strip()), template_id=self.template_id).toStr()
+                return response(protocol=protocol.thinking_error, debug="思考过程出错:{}\n".format(content), template_id=self.template_id).toStr()
             if typ == "image/png":
                 await sock.send(response(protocol=protocol.thinking_image, debug=result.strip(), template_id=self.template_id).toStr())
             function_call = res.pop("function_call")
