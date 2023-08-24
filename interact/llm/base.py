@@ -194,6 +194,7 @@ class AIBeingBaseTask(object):
                     assert response.status == 200, f"proxy status code is: {response.status}"
                     res, buffer = "", b""
                     async for chunk in response.content.iter_any():
+                        logger.info(f"chunk: {chunk}")
                         buffer += chunk
                         while b"\n" in buffer:
                             line, buffer = buffer.split(b"\n", 1)
