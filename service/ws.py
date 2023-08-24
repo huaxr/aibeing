@@ -67,7 +67,7 @@ class WSServer(object):
             except Exception as e:
                 if isinstance(e, WebSocketException):
                     await websocket.close()
-                    logger.info("session closed %s" %session_id)
+                    logger.info("session closed {}, exception:{}".format(session_id, str(e)))
                     break
                 elif isinstance(e, openai.OpenAIError):
                     excepts = "openai exception! %s" % (str(e))

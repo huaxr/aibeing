@@ -12,3 +12,4 @@ bokeh
 plotly
 dash
 networkx
+seaborn
