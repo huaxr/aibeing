@@ -68,7 +68,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=content, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
-        res = self.proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
+        res = self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
         while 1:
             typ = res.pop("exec_type")
             if typ == "stop":
@@ -93,7 +93,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         if isinstance(inputs, dict):
             content = inputs["text"]
             file = inputs["file"]
-            self.codeinterpreter(content, file, hook.sock)
+            return self.codeinterpreter(content, file, hook.sock)
 
         if inputs == protocol.get_greeting:
             return self.greeting()
@@ -124,7 +124,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         if isinstance(inputs, dict):
             content = inputs["text"]
             file = inputs["file"]
-            await self.async_codeinterpreter(content, file, hook.sock)
+            return await self.async_codeinterpreter(content, file, hook.sock)
 
         if inputs == protocol.get_greeting:
             return self.greeting()
