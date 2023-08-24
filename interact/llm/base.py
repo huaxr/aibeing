@@ -182,7 +182,6 @@ class AIBeingBaseTask(object):
     async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False) -> str:
         assert len(messages) > 0, "messages length must > 0"
         headers, data, streaming = self.prepare_header_data(messages, streaming, temperature)
-        logger.info(f"async proxy data: {data}")
         async with aiohttp.ClientSession() as session:
             if streaming:
                 # 手动触发
