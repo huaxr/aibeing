@@ -111,8 +111,8 @@ class WSServer(object):
             if task is None or template_id != current_template_id:
                 current_template_id = template_id
                 task = AIBeingChatTask(session_id, template_id, self.audiotrans)
-            aiSay = task.generate(data, hook=AIBeingHook(token_queue, template_id))
-            # aiSay = task.codeinterpreter(data)
+            # aiSay = task.generate(data, hook=AIBeingHook(token_queue, template_id))
+            aiSay = task.codeinterpreter(data)
             await websocket.send(aiSay)
 
     def exception_handler(self, loop, context):

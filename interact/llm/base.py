@@ -192,10 +192,14 @@ class AIBeingBaseTask(object):
 
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"
-                    res = ""
+                    res, buffer = "", b""
                     async for chunk in response.content.iter_any():
-                        if chunk:
-                            data_str = chunk.decode('utf-8')
+                        buffer += chunk
+                        while b"\n" in buffer:
+                            line, buffer = buffer.split(b"\n", 1)
+                            if len(line) == 0:
+                                continue
+                            data_str = line.decode('utf-8')
                             if data_str.__contains__("[DONE]"):
                                 if hook.is_pure:
                                     await hook.stream_pure_end()
