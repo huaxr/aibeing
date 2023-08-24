@@ -37,18 +37,19 @@ def python_handler(code):
         return AIBeingException("Error running IPython code: {}".format(e))
 
 codebox = CodeBox()
-codebox.start()
 # 不能关闭 shell， 否则交互式变量丢失
 # codebox.stop()
 
 def ipython_handler(code) -> CodeBoxOutput:
     # check if it's running
-    assert codebox.status() == "running", "CodeBox is not running"
+    if codebox.status() != "running":
+        codebox.start()
     result = codebox.run(code)
     return result
 
 async def async_ipython_handler(code) -> CodeBoxOutput:
-    assert codebox.status() == "running", "CodeBox is not running"
+    if await codebox.astatus() != "running":
+        await codebox.astart()
     result = await codebox.arun(code)
     return result
 
