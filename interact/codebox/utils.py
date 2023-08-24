@@ -8,8 +8,8 @@ import requests
 from aiohttp import ClientResponse, ClientSession, FormData
 from aiohttp.payload import BytesIOPayload
 
-from codeboxapi.config import settings
-from codeboxapi.errors import CodeBoxError
+from interact.codebox.config import settings
+from interact.codebox.errors import CodeBoxError
 
 
 def build_request_data(

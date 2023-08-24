@@ -18,6 +18,9 @@ llm:
   async: true
   embedding: /root/embedding
   type: msai # or openai
+  jupyter_port : 10010
+  msai_addr: http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-07-01-preview
+  msai_max_token: 8000
 
 audio:
   upload_path: "/var/www/uploads/"

@@ -5,6 +5,7 @@
 class protocol:
     chat_response = "chat_rsp"
     pong = "pong"
+    login = "login"
 
     stream_start = "stream_start"
     stream_action = "stream_action"

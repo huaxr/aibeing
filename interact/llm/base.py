@@ -9,7 +9,10 @@ from typing import Any, Union, List
 import aiohttp
 import langchain
 import requests
+import tiktoken
 from langchain.cache import InMemoryCache
+
+from core.conf import config
 from core.db import get_template_by_id, TemplateModel
 from core.log import logger
 from interact.handler.voice.microsoft import AudioTransform
@@ -23,9 +26,10 @@ class AIBeingBaseTask(object):
     def __init__(self, text2speech: AudioTransform):
         self.text2speech = text2speech
         self.rds_greeting_key = "{id}-{name}-greeting"
-        self.msai = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-07-01-preview"
+        self.msai = config.llm_msai_addr
         # self.msai = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15"
         self.msai_key = os.environ.get("PROXY_KEY")
+        self.encoding = tiktoken.encoding_for_model("gpt-4")
 
     def generate(self, *args, **kwargs) -> Any:
         raise NotImplementedError
@@ -85,6 +89,12 @@ class AIBeingBaseTask(object):
         out = self.get_model_outout_cost(model_type) * output_size
         return str(round(inp + out, 5))
 
+    def _tokens(self, messages: List) -> int:
+        num_tokens = 0
+        for i in messages:
+            num_tokens += len(self.encoding.encode(i.get("content", "")))
+        return num_tokens
+
     def model2template(self, template_model: TemplateModel) -> Template:
         name = template_model.name
         avatar = template_model.avatar
@@ -130,6 +140,11 @@ class AIBeingBaseTask(object):
         assert len(messages) > 0, "messages length must > 0"
         if functions:
             temperature = 0.03
+
+        token_count = self._tokens(messages)
+        if token_count > config.llm_msai_max_token:
+            messages = messages[2:]
+
         headers, data, streaming = self.prepare_header_data(messages, streaming, temperature, functions)
         if streaming:
             if hook.is_pure:
@@ -202,6 +217,10 @@ class AIBeingBaseTask(object):
 
     async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False) -> str:
         assert len(messages) > 0, "messages length must > 0"
+        token_count = self._tokens(messages)
+        if token_count > config.llm_msai_max_token:
+            messages = messages[2:]
+
         headers, data, streaming = self.prepare_header_data(messages, streaming, temperature)
         async with aiohttp.ClientSession() as session:
             if streaming:

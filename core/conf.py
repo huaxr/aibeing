@@ -38,6 +38,18 @@ class Config:
         return self.data["llm"]["async"]
 
     @property
+    def llm_jupyter_port(self) -> int:
+        return self.data["llm"]["jupyter_port"]
+
+    @property
+    def llm_msai_addr(self) -> str:
+        return self.data["llm"]["msai_addr"]
+
+    @property
+    def llm_msai_max_token(self) -> int:
+        return self.data["llm"]["msai_max_token"]
+
+    @property
     def audio_save_path(self) -> str:
         return self.data["audio"]["save_path"]
     @property

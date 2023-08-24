@@ -40,10 +40,10 @@ from uuid import UUID
 
 from aiohttp import ClientSession
 
-from codeboxapi.box.basebox import BaseBox
-from codeboxapi.config import settings
-from codeboxapi.schema import CodeBoxFile, CodeBoxOutput, CodeBoxStatus
-from codeboxapi.utils import abase_request, base_request
+from interact.codebox.box.basebox import BaseBox
+from interact.codebox.config import settings
+from interact.codebox.schema import CodeBoxFile, CodeBoxOutput, CodeBoxStatus
+from interact.codebox.utils import abase_request, base_request
 
 
 class CodeBox(BaseBox):

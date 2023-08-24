@@ -2,7 +2,9 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import subprocess
+from pathlib import Path
 
+from interact.codebox import CodeBox
 from interact.llm.exception import AIBeingException
 
 functions = [
@@ -33,11 +35,16 @@ def python_handler(code):
         return out
     except subprocess.CalledProcessError as e:
         return AIBeingException("Error running IPython code: {}".format(e))
-    return exec(code)
+
+
+def ipython_handler(code):
+    box = CodeBox()
+    box.start()
+    box.run(code)
 
 
 available_functions = {
-    "python": python_handler,
+    "python": ipython_handler,
 }
 
 if __name__ == '__main__':
@@ -55,5 +62,5 @@ plt.title('Iris Classes Distribution')
 plt.savefig('/tmp/iris_classes_distribution.png')
 print('/tmp/iris_classes_distribution.png')
     """
-    res = exec(code)
+    res = ipython_handler(code)
     print(res)

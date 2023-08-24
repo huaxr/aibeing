@@ -6,7 +6,7 @@ from os import PathLike
 from typing import List, Optional
 from uuid import UUID
 
-from codeboxapi.schema import CodeBoxFile, CodeBoxOutput, CodeBoxStatus
+from interact.codebox.schema import CodeBoxFile, CodeBoxOutput, CodeBoxStatus
 
 
 class BaseBox(ABC):

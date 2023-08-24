@@ -15,6 +15,14 @@ engine = create_engine(conf.config.mysql_dsn)
 Session = sessionmaker(bind=engine)
 Base = declarative_base()
 
+class PureChatModel(Base):
+    __tablename__ = 'pure_chat'
+    id = Column(Integer, primary_key=True)
+    uid = Column(String(100))
+    input = Column(Text)
+    output = Column(Text)
+    create_time = Column(DateTime, default=datetime.now)
+
 class ChatHistoryModel(Base):
     __tablename__ = 'chat_history'
     id = Column(Integer, primary_key=True)

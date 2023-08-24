@@ -18,6 +18,9 @@ llm:
   async: false
   embedding: /Users/huaxinrui/AIB/aibeing/interact/llm/vector/embedding # or openai
   type: msai # or openai
+  jupyter_port: 10010
+  msai_addr: http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-07-01-preview
+  msai_max_token: 8000
 
 audio:
   upload_path: "/tmp/"
@@ -29,4 +32,5 @@ vector:
   host: "127.0.0.1"
 #  host: "47.253.53.220"
   port: 8000
+
 
