@@ -69,6 +69,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         self.chat_list[0] = sys
         self.chat_list.append(user)
         res = self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
+        print(res)
         while 1:
             typ = res.pop("exec_type")
             if typ == "stop":
