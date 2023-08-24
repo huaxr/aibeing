@@ -95,7 +95,9 @@ class AIBeingBaseTask(object):
     def _tokens(self, messages: List) -> int:
         num_tokens = 0
         for i in messages:
-            num_tokens += len(self.encoding.encode(i.get("content", "")))
+            content = i.get("content", None)
+            if content:
+                num_tokens += len(self.encoding.encode(content))
         return num_tokens
 
     def model2template(self, template_model: TemplateModel) -> Template:
