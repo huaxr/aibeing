@@ -196,8 +196,8 @@ class AIBeingBaseTask(object):
                     async for chunk in response.content.iter_any():
                         logger.info(f"chunk: {chunk}")
                         buffer += chunk
-                        while b"\n" in buffer:
-                            line, buffer = buffer.split(b"\n", 1)
+                        while b"\n\n" in buffer:
+                            line, buffer = buffer.split(b"\n\n", 1)
                             if len(line) == 0:
                                 continue
                             data_str = line.decode('utf-8')
