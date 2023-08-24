@@ -201,7 +201,11 @@ class AIBeingBaseTask(object):
                                 return res
                             json_start = data_str.find('{')
                             json_data = data_str[json_start:]
-                            parsed_data = json.loads(json_data)
+                            try:
+                                parsed_data = json.loads(json_data)
+                            except Exception:
+                                logger.error(f"loads error, data: {json_data}")
+                                raise AIBeingException("loads error from msai")
                             delta = parsed_data['choices'][0]['delta']
                             content = delta.get("content", None)
                             if content:

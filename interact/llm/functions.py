@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
-import json
-import sys
-from io import StringIO
+import subprocess
+
+from interact.llm.exception import AIBeingException
 
 functions = [
     {
@@ -25,28 +25,14 @@ functions = [
     },
 ]
 
-from contextlib import redirect_stdout
-from contextlib import redirect_stdout
-from IPython import get_ipython
-
-def execute_code(code):
-    ipython = get_ipython()
-
+def python_handler(code):
     try:
-        exec(code)
-    finally:
-        ipython.magic("capture stop")
-
-    output_result = ipython.last_execution_result.capture.output
-    return "\n".join(output_result)
-
-
-def python_handler(code: str):
-    output = execute_code(code)
-    return output
-
+        result = subprocess.run(['ipython', '-c', code], check=True, capture_output=True, text=True)
+        return result.stdout
+    except subprocess.CalledProcessError as e:
+        return AIBeingException("Error running IPython code: {}".format(e))
 
 
 available_functions = {
     "python": python_handler,
-}  # only one function in this example, but you can have multiple
+}

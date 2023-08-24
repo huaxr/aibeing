@@ -1,23 +1,34 @@
-# -*- coding: utf-8 -*-
-# @Team: AIBeing
-# @Author: huaxinrui@tal.com
+import os
+import subprocess
+os.environ["PYDEVD_DISABLE_FILE_VALIDATION"] = "1"
 
-code = """import pandas as pd
-
-# Load the data
-iris = pd.read_csv('/tmp/iris.csv')
-
-# Display the first few rows of the data
-iris.head()
-"""
-
-from IPython import get_ipython
+def start_jupyter_notebook():
+    try:
+        subprocess.run(['jupyter', 'notebook'], check=True)
+    except subprocess.CalledProcessError as e:
+        print("Error starting Jupyter Notebook:", e)
 
 
-ipython = get_ipython()
+def run_ipython_code(code):
+    try:
+        result = subprocess.run(['ipython', '-c', code], check=True, capture_output=True, text=True)
+        print(result.stdout)
+    except subprocess.CalledProcessError as e:
+        print("Error running IPython code:", e)
 
-exec(code)
 
+if __name__ == "__main__":
+    # Start Jupyter Notebook server
+    # start_jupyter_notebook()
 
-output_result = ipython.last_execution_result.capture.output
-print("\n".join(output_result))
+    # Run IPython code
+    ipython_code = """
+    import pandas as pd
+
+    # Load the data
+    iris = pd.read_csv('/tmp/iris.csv')
+
+    # Display the first few rows of the data
+    iris.head()
+    """
+    run_ipython_code(ipython_code)
