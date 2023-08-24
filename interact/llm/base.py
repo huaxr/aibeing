@@ -138,18 +138,23 @@ class AIBeingBaseTask(object):
             response = requests.post(self.msai, headers=headers, json=data, stream=True)
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
             res = ""
-            for line in response.iter_lines(chunk_size=1024):
-                if line:
-                    data_str = line.decode('utf-8')
-                    if data_str == "data: [DONE]":
+            for chunk in response.iter_lines(chunk_size=1024):
+                if chunk:
+                    data_str = chunk.decode('utf-8')
+                    if data_str.__contains__("[DONE]"):
                         if hook.is_pure:
                             hook.stream_pure_end()
                         return res
                     json_start = data_str.find('{')
                     json_data = data_str[json_start:]
-                    parsed_data = json.loads(json_data)
+                    try:
+                        parsed_data = json.loads(json_data)
+                    except Exception:
+                        logger.error(f"loads error, data: {json_data}")
+                        raise AIBeingException("loads error from msai")
                     delta = parsed_data['choices'][0]['delta']
                     content = delta.get("content", None)
+
                     if content:
                         res += content
                         if hook.is_pure:
@@ -187,14 +192,10 @@ class AIBeingBaseTask(object):
 
                 async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, f"proxy status code is: {response.status}"
-                    res, buffer = "", b""
+                    res = ""
                     async for chunk in response.content.iter_any():
-                        buffer += chunk
-                        while b"\n" in buffer:
-                            line, buffer = buffer.split(b"\n", 1)
-                            if len(line) == 0:
-                                continue
-                            data_str = line.decode('utf-8')
+                        if chunk:
+                            data_str = chunk.decode('utf-8')
                             if data_str.__contains__("[DONE]"):
                                 if hook.is_pure:
                                     await hook.stream_pure_end()
