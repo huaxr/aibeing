@@ -335,7 +335,7 @@ class AIBeingBaseTask(object):
                     assert response.status == 200, "proxy status code is: {}".format(response.status)
                     json_response = await response.json()
                     if functions:
-                        res = await self.async_agent(json_response)
+                        res = self.agent(json_response)
                         return res
                     return json_response["choices"][0]["message"]["content"]
 
