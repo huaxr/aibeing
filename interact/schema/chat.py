@@ -23,6 +23,8 @@ class response:
             res["audio_url"] = self.audio_url
         if self.template_id != None:
             res["template_id"] = self.template_id
+        else:
+            res["template_id"] = -1
         if self.chat_id != None:
             res["chat_id"] = self.chat_id
         return json.dumps(res)

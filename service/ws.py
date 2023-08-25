@@ -67,7 +67,7 @@ class WSServer(object):
             except Exception as e:
                 if isinstance(e, WebSocketException):
                     await websocket.close()
-                    logger.info("session closed {}, exception:{}".format(session_id, str(e)))
+                    logger.info("session closed {}".format(session_id))
                     break
                 elif isinstance(e, openai.OpenAIError):
                     excepts = "openai exception! %s" % (str(e))
@@ -123,7 +123,6 @@ class WSServer(object):
                         sessions[session_id] = AIBeingChatTask(session_id, template_id, self.audiotrans)
                 assert session_id in sessions, AIBeingException("session_id not in sessions")
                 aiSay = sessions[session_id].generate(data, hook=AIBeingHook(token_queue, template_id))
-                # aiSay = sessions[session_id].codeinterpreter(data, "")
                 await websocket.send(aiSay)
             except Exception as e:
                 if isinstance(e, WebSocketException):

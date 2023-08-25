@@ -17,6 +17,7 @@ from core.db import ChatHistoryModel, create_chat, PureChatModel
 from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
 from interact.llm.base import AIBeingBaseTask
+from interact.llm.hook import AIBeingHookAsync, AIBeingHook
 from interact.schema.chat import response
 from interact.schema.protocal import protocol
 from interact.llm.template import chat, analyze, codecot
@@ -25,10 +26,14 @@ from interact.llm.vector.client import VectorDB
 from interact.llm.functions import functions
 class AIBeingChatTask(AIBeingBaseTask):
     def  __init__(self, uid: str, template_id: int, text2speech: AudioTransform):
-        self.template = self.load_template(template_id)
-        self.chat_list: List[Dict] = [self.system_message("你是一个聊天机器人")]
+        self.pure = True
+        if template_id > 0:
+            self.template = self.load_template(template_id)
+            self.template_id = template_id
+            self.pure = False
+
+        self.chat_list: List[Dict] = [self.system_message("You can start to chat now!")]
         self.uid = uid
-        self.template_id = template_id
         self.vector = VectorDB(config.llm_type)
         # self.search = GoogleAPIWrapper()
         # for async only
@@ -37,34 +42,42 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._wait_analyze_times = 0
         super().__init__(text2speech)
 
-    def codeinterpreter(self, user_input, file, sock):
+    def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):
         sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.image_path))
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
+        logger.info(sys)
+        logger.info(user)
         res = self.proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
         while 1:
+            result = res.pop("exec_result")
             typ = res.pop("exec_type")
             if typ == "stop":
-                return response(protocol=protocol.thinking_stop, debug="完成思考", template_id=self.template_id).toStr()
+                ai = self.ai_message(result)
+                logger.info(ai)
+                self.chat_list.append(ai)
+                return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
-            result = res.pop("exec_result")
             if typ == "text":
-                sock.send(response(protocol=protocol.thinking_now, debug="思考:{}\n".format(content), template_id=self.template_id).toStr())
+                hook.send_raw(response(protocol=protocol.thinking_now, debug=content).toStr())
             if typ == "error":
-                return response(protocol=protocol.thinking_error, debug="思考过程出错:{}\n".format(content), template_id=self.template_id).toStr()
+                return response(protocol=protocol.thinking_error, debug=content + result).toStr()
             if typ == "image/png":
-                sock.send(response(protocol=protocol.thinking_image, debug=result, template_id=self.template_id).toStr())
+                hook.send_raw(response(protocol=protocol.thinking_image, debug=result).toStr())
+
             function_call = res.pop("function_call")
             name = function_call["name"]
             ai = self.ai_message(content, function_call)
             func = self.func_message(result, name)
             self.chat_list.append(ai)
             self.chat_list.append(func)
+            logger.info(ai)
+            logger.info(func)
             res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
 
-    async def async_codeinterpreter(self, user_input, file, sock):
-        sys = self.system_message(codecot.codeinterpreter_system)
+    async def async_codeinterpreter(self, user_input: str, file: str, hook: AIBeingHookAsync):
+        sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.image_path))
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
@@ -73,14 +86,15 @@ class AIBeingChatTask(AIBeingBaseTask):
             typ = res.pop("exec_type")
             result = res.pop("exec_result")
             if typ == "stop":
-                return response(protocol=protocol.thinking_stop, debug=result, template_id=self.template_id).toStr()
+                # stop means ask user some questions
+                return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
             if typ == "text":
-                await sock.send(response(protocol=protocol.thinking_now, debug="思考:{}\n".format(content), template_id=self.template_id).toStr())
+                await hook.send_raw(response(protocol=protocol.thinking_now, debug=content).toStr())
             if typ == "error":
-                return response(protocol=protocol.thinking_error, debug="思考过程出错:{}\n".format(content), template_id=self.template_id).toStr()
+                return response(protocol=protocol.thinking_error, debug=content).toStr()
             if typ == "image/png":
-                await sock.send(response(protocol=protocol.thinking_image, debug=result, template_id=self.template_id).toStr())
+                await hook.send_raw(response(protocol=protocol.thinking_image, debug=result).toStr())
             function_call = res.pop("function_call")
             name = function_call["name"]
             ai = self.ai_message(content, function_call)
@@ -93,14 +107,14 @@ class AIBeingChatTask(AIBeingBaseTask):
         if isinstance(inputs, dict):
             content = inputs["content"]
             file = inputs["file"]
-            return self.codeinterpreter(content, file, hook.sock)
+            return self.codeinterpreter(content, file, hook)
 
-        if self.template is None:
+        if self.pure:
             self.chat_list.append(self.user_message(inputs))
             res = self.proxy(self.chat_list[-8:], hook, 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
-            return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
+            return response(protocol=protocol.chat_response, debug=res).toStr()
 
         if inputs == protocol.get_greeting:
             return self.greeting()
@@ -110,7 +124,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         ana_res = self.analyze(inputs)
         self.chat_list[0] = self.get_system_template(self.template.get_prompt(), "\n".join(contexts), ana_res, lang="cn")
         chat_list = self.chat_list + [self.get_user_template(self.template.get_emotions(), inputs)]
-        res = self.proxy(chat_list, kwargs["hook"], self.template.temperature, streaming=True)
+        res = self.proxy(chat_list, hook, self.template.temperature, streaming=True)
         emotion, reply = self.handler_result(res)
         logger.info("emotion: {}, input: {}, reply: {}".format(emotion, inputs, reply))
         self.chat_list.append(self.user_message(inputs))
@@ -125,14 +139,14 @@ class AIBeingChatTask(AIBeingBaseTask):
         if isinstance(inputs, dict):
             content = inputs["content"]
             file = inputs["file"]
-            return await self.async_codeinterpreter(content, file, hook.sock)
+            return await self.async_codeinterpreter(content, file, hook)
         # pure chat
-        if self.template is None:
+        if self.pure:
             self.chat_list.append(self.user_message(inputs))
             res = await self.async_proxy(self.chat_list, hook, 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
-            return response(protocol=protocol.chat_response, debug=res, template_id=self.template_id).toStr()
+            return response(protocol=protocol.chat_response, debug=res).toStr()
         # chat
         if inputs == protocol.get_greeting:
             return self.greeting()
@@ -163,7 +177,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         contexts = await self.async_similarity(inputs, self.template.vec)
         self.chat_list[0] = self.get_system_template(self.template.get_prompt(), "\n".join(contexts), self._analyze_future_result, lang="cn")
         chat_list = self.chat_list + [self.get_user_template(self.template.get_emotions(), inputs)]
-        res = await self.async_proxy(chat_list, kwargs["hook"], self.template.temperature, streaming=True)
+        res = await self.async_proxy(chat_list, hook, self.template.temperature, streaming=True)
         emotion, reply = self.handler_result(res)
         logger.info("emotion: {}, input: {}, reply: {}}".format(emotion, inputs, reply))
         self.chat_list.append(self.ai_message(reply))

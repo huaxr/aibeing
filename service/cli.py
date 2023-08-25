@@ -21,26 +21,16 @@ async def send_message():
         asyncio.create_task(heartbeat(websocket))
 
         while True:
-            message = input("\n请输入消息：")
-            if message == "greeting":
-                message = json.dumps({"pt": "get_greeting", "template_id": 1})
+            message = input("请输入消息：")
+            message = json.dumps(
+                {"pt": "chat_thinking", "template_id": -1, "txt": {"content": message, "file": "/tmp/iris.csv"}})
             await websocket.send(message)
 
             while True:
                 response = await websocket.recv()
                 data = json.loads(response)
-                if data["pt"] == "stream_end":
-                    break
-
-                if data["pt"] == "stream_action":
-                    token = data["txt"]
-                    sys.stdout.write(token)
-                    sys.stdout.flush()
-                    continue
-
-                if data["pt"] == "exception":
-                    print(data["txt"] + "\n")
-                    break
+                print(data)
+                break
 
 
 asyncio.get_event_loop().run_until_complete(send_message())

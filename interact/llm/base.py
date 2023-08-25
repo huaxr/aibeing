@@ -153,7 +153,6 @@ class AIBeingBaseTask(object):
                 logger.error(f"arguments is not dict: {arguments}")
                 code = arguments
 
-            logger.info("generate code:\n" + code)
             callable = available_functions[function_name]
             exec_result = callable(code)
             if exec_result.type == "image/png":
@@ -167,11 +166,9 @@ class AIBeingBaseTask(object):
                 call_res["exec_result"] = file
 
             elif exec_result.type == "text":
-                logger.info("exec result:{}".format(exec_result.content))
                 call_res["exec_result"] = exec_result.content
 
             elif exec_result.type == "error":
-                logger.error("exec error:{}".format(exec_result.content))
                 call_res["exec_result"] = exec_result.content
 
             else:
@@ -199,7 +196,6 @@ class AIBeingBaseTask(object):
                 logger.error(f"arguments is not dict: {arguments}")
                 code = arguments
 
-            logger.info("generate code:\n" + code)
             callable = available_functions[function_name+"_async"]
             exec_result = await callable(code)
             if exec_result.type == "image/png":

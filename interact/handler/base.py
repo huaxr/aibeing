@@ -82,8 +82,10 @@ class BaseHandler(object):
         pt = js["pt"]
 
         if pt == "chat_thinking":
-            dic = json.loads(js["txt"])
-            return dic, int(js["template_id"]), False, ""
+            body = js["txt"]
+            if isinstance(body, str):
+                body = json.loads(body)
+            return body, int(js["template_id"]), False, ""
 
         if pt == "login":
             session_id = js["txt"]
