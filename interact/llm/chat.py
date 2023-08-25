@@ -66,11 +66,9 @@ class AIBeingChatTask(AIBeingBaseTask):
     async def async_codeinterpreter(self, user_input, file, sock):
         sys = self.system_message(codecot.codeinterpreter_system)
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
-        logger.info(user)
         self.chat_list[0] = sys
         self.chat_list.append(user)
         res = await self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
-        logger.info("async_codeinterpreter:{}".format(res))
         while 1:
             typ = res.pop("exec_type")
             result = res.pop("exec_result")

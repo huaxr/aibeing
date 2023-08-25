@@ -29,8 +29,6 @@ class AIBeingBaseTask(object):
     def __init__(self, text2speech: AudioTransform):
         self.text2speech = text2speech
         self.rds_greeting_key = "{id}-{name}-greeting"
-        self.msai = config.llm_msai_addr
-        # self.msai = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-05-15"
         self.msai_key = os.environ.get("PROXY_KEY")
         self.encoding = tiktoken.encoding_for_model("gpt-4")
 
@@ -205,7 +203,6 @@ class AIBeingBaseTask(object):
             callable = available_functions[function_name+"_async"]
             exec_result = await callable(code)
             if exec_result.type == "image/png":
-                logger.info("image received")
                 image_bytes = base64.b64decode(exec_result.content)
                 # 将字节数据转换为 Image 对象（使用 Pillow 库）
                 image = Image.open(BytesIO(image_bytes))
@@ -245,9 +242,8 @@ class AIBeingBaseTask(object):
             if hook.is_pure:
                 hook.stream_pure_start()
 
-            response = requests.post(self.msai, headers=headers, json=data, stream=True)
+            response = requests.post(config.llm_msai_addr, headers=headers, json=data, stream=True)
             if  response.status_code != 200:
-                logger.error("response str: {}".format(response.text))
                 raise AIBeingException("proxy status code is: {}".format(response.status_code))
 
             res = ""
@@ -263,7 +259,6 @@ class AIBeingBaseTask(object):
                     try:
                         parsed_data = json.loads(json_data)
                     except Exception:
-                        logger.error(f"loads error, data: {json_data}")
                         raise AIBeingException("loads error from msai")
                     delta = parsed_data['choices'][0]['delta']
                     content = delta.get("content", None)
@@ -275,7 +270,7 @@ class AIBeingBaseTask(object):
                         else:
                             hook.stream_chat_token(content)
         else:
-            response = requests.post(self.msai, headers=headers, json=data, stream=False)
+            response = requests.post(config.llm_msai_addr, headers=headers, json=data, stream=False)
             assert response.status_code == 200, "proxy status code is: {}".format(response.status_code)
             response_message = response.json()
             if functions:
@@ -299,8 +294,11 @@ class AIBeingBaseTask(object):
                 else:
                     await hook.stream_chat_token("{")
 
-                async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
-                    assert response.status == 200, f"proxy status code is: {response.status}"
+                async with session.post(config.llm_msai_addr, headers=headers, json=data, timeout=None) as response:
+                    if response.status != 200:
+                        response_text = await response.text()
+                        raise AIBeingException(f"proxy status code is: {response.status}, response is: {response_text}")
+
                     res, buffer = "", b""
                     async for chunk in response.content.iter_any():
                         if b'"error":' in chunk:
@@ -321,8 +319,7 @@ class AIBeingBaseTask(object):
                             try:
                                 parsed_data = json.loads(json_data)
                             except Exception:
-                                logger.error(f"loads error, data: {json_data}")
-                                raise AIBeingException("loads error from msai")
+                                raise AIBeingException(f"loads error, data: {json_data}")
                             delta = parsed_data['choices'][0]['delta']
                             content = delta.get("content", None)
                             if content:
@@ -333,7 +330,7 @@ class AIBeingBaseTask(object):
                                     await hook.stream_chat_token(content)
 
             else:
-                async with session.post(self.msai, headers=headers, json=data, timeout=None) as response:
+                async with session.post(config.llm_msai_addr, headers=headers, json=data, timeout=None) as response:
                     assert response.status == 200, "proxy status code is: {}".format(response.status)
                     json_response = await response.json()
                     if functions:

@@ -92,7 +92,6 @@ class AudioTransform(object):
                 f.write(response.content)
             return True, audio_file
         else:
-            logger.error(f'Error text2audio: {response.status_code}, {response.text},' + token)
             raise AIBeingException(f'Error text2audio: {response.status_code}, {response.text},' + token)
 
 
@@ -137,7 +136,6 @@ class AudioTransform(object):
                         await f.write(await response.read())
                     return True, audio_file
                 else:
-                    logger.error(f'Error async_text2audio: {response.status}, {await response.text()},' + token)
                     raise AIBeingException(f'Error text2audio: {response.status}, {await response.text()},' + token)
 
         return False, None
