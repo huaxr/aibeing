@@ -25,7 +25,21 @@ from interact.llm.template.template import Template, Vector, Voice, FewShot
 from interact.llm.functions import available_functions
 
 class AIBeingBaseTask(object):
-
+    # def __new__(cls, *args, **kwargs):
+    #     typ = kwargs.pop("type")
+    #     if typ == "pure":
+    #         from interact.llm.pure import AIBeingPureTask
+    #         return AIBeingPureTask(*args, **kwargs)
+    #
+    #     if typ == "interpreter":
+    #         from interact.llm.interpreter import AIBeingCodeInterpreterTask
+    #         return AIBeingCodeInterpreterTask(*args, **kwargs)
+    #
+    #     if typ == "chat":
+    #         from interact.llm.chat import AIBeingChatTask
+    #         return AIBeingChatTask(*args, **kwargs)
+    #
+    #     raise AIBeingException("Unknown type:"+typ)
     def __init__(self, text2speech: AudioTransform):
         self.text2speech = text2speech
         self.rds_greeting_key = "{id}-{name}-greeting"
