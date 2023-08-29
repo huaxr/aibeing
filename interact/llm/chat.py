@@ -53,8 +53,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             hook.send_text(protocol.gen_story_action, part)
             logger.info("gen_story: %s, prompt %s" % (part, i))
             story += part
-        hook.send_text(protocol.gen_story_end, "")
-        return story
+        return response(protocol=protocol.gen_story_end, debug="").toStr()
 
     async def async_gen_story(self, prompt_chains: List[str], theme: str, hook: AIBeingHookAsync):
         messages = [Any, Any]
@@ -68,7 +67,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             await hook.send_text(protocol.gen_story_action, "主题: {}, prompt:{} \n生成结果:{}".format(theme, i, part))
             logger.info("gen_story: %s, prompt %s" % (part, i))
             story += part
-        await hook.send_text(protocol.gen_story_end, "")
+        return response(protocol=protocol.gen_story_end, debug="").toStr()
 
 
     def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):
