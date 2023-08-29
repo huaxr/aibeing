@@ -41,34 +41,34 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._wait_analyze_times = 0
         super().__init__(text2speech)
 
-    def gen_story(self, prompt_chains: List[str], theme: str, hook):
+    def gen_story(self, prompt_chains: List[str], theme: str, hook: AIBeingHook):
         messages = [Any, Any]
         story = ""
-        hook.send_raw(response(protocol=protocol.gen_story_start, debug="").toStr())
+        hook.send_text(protocol.gen_story_start, "")
         for i in prompt_chains:
             messages[0] = self.system_message(storyfactory_system.format(system_theme=theme, story=story))
             messages[1] = self.user_message(i)
             logger.info("prompts {}".format(messages))
             res = self.proxy(messages, None, 0.9, False)
             part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "") + "\n"
-            hook.send_raw(response(protocol=protocol.gen_story_action, debug=part).toStr())
+            hook.send_text(protocol.gen_story_action, part)
             logger.info("gen_story: %s, prompt %s" % (part, i))
-        hook.send_raw(response(protocol=protocol.gen_story_end, debug="").toStr())
+        hook.send_text(protocol.gen_story_end, "")
         return story
 
-    async def async_gen_story(self, prompt_chains: List[str], theme: str, hook):
+    async def async_gen_story(self, prompt_chains: List[str], theme: str, hook: AIBeingHookAsync):
         messages = [Any, Any]
         story = ""
-        await hook.send_raw(response(protocol=protocol.gen_story_start, debug="").toStr())
+        await hook.send_text(protocol.gen_story_start, "")
         for i in prompt_chains:
             messages[0] = self.system_message(storyfactory_system.format(system_theme=theme, story=story))
             messages[1] = self.user_message(i)
             logger.info("prompts {}".format(messages))
             res = await self.async_proxy(messages, None, 0.9, False)
             part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "") + "\n"
-            await hook.send_raw(response(protocol=protocol.gen_story_action, debug=part).toStr())
+            await hook.send_text(protocol.gen_story_action, part)
             logger.info("gen_story: %s, prompt %s" % (part, i))
-        await hook.send_raw(response(protocol=protocol.gen_story_end, debug="").toStr())
+        await hook.send_text(protocol.gen_story_end, "")
         return story
 
     def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):

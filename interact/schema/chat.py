@@ -5,7 +5,7 @@ import json
 from interact.schema.protocal import protocol
 
 class response:
-    def __init__(self, protocol:protocol=None,  debug =None, style=None, audio_url=None, template_id=None, chat_id=None):
+    def __init__(self, protocol:str=None,  debug =None, style=None, audio_url=None, template_id=None, chat_id=None):
         self.pt = protocol
         self.txt = debug
         self.style = style

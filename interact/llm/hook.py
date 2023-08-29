@@ -57,6 +57,8 @@ class AIBeingHookAsync(Hook):
         await self.sock.send(response(protocol=protocol.stream_end, template_id=self.template_id).toStr())
     async def send_raw(self, text: str) -> None:
         await self.sock.send(response(protocol=protocol.chat_response, debug=text, template_id=self.template_id).toStr())
+    async def send_text(self, proto: str, text: str) -> None:
+        await self.sock.send(response(protocol=proto, debug=text, template_id=self.template_id).toStr())
 
 class AIBeingHook(Hook):
     """Callback Handler that prints to std out."""
@@ -94,3 +96,6 @@ class AIBeingHook(Hook):
 
     def send_raw(self, text):
         self.q.put(response(protocol=protocol.chat_response, debug=text, template_id=self.template_id).toStr())
+
+    def send_text(self, protocol, text):
+        self.q.put(response(protocol=protocol, debug=text, template_id=self.template_id).toStr())
