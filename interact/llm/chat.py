@@ -48,11 +48,11 @@ class AIBeingChatTask(AIBeingBaseTask):
         for i in prompt_chains:
             messages[0] = self.system_message(storyfactory_system.format(system_theme=theme, story=story))
             messages[1] = self.user_message(i)
-            logger.info("prompts {}".format(messages))
             res = self.proxy(messages, None, 0.9, False)
             part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "") + "\n"
             hook.send_text(protocol.gen_story_action, part)
             logger.info("gen_story: %s, prompt %s" % (part, i))
+            story += part
         hook.send_text(protocol.gen_story_end, "")
         return story
 
@@ -63,13 +63,13 @@ class AIBeingChatTask(AIBeingBaseTask):
         for i in prompt_chains:
             messages[0] = self.system_message(storyfactory_system.format(system_theme=theme, story=story))
             messages[1] = self.user_message(i)
-            logger.info("prompts {}".format(messages))
             res = await self.async_proxy(messages, None, 0.9, False)
             part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "") + "\n"
-            await hook.send_text(protocol.gen_story_action, part)
+            await hook.send_text(protocol.gen_story_action, "主题: {}, prompt:{} \n生成结果:{}".format(theme, i, part))
             logger.info("gen_story: %s, prompt %s" % (part, i))
+            story += part
         await hook.send_text(protocol.gen_story_end, "")
-        return story
+
 
     def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):
         sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.image_path))
