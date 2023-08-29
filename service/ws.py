@@ -44,10 +44,10 @@ class WSServer(object):
                 if len(message) == 0:
                     await websocket.send(response(protocol=protocol.exception, debug="should not empty").toStr())
                     continue
-                data, template_id, responseDirectly, session = await self.handler.async_on_message(message)
+                data, template_id, pt, session = await self.handler.async_on_message(message)
                 if session:
                     session_id = session
-                if responseDirectly:
+                if not pt:
                     data = data.toStr() if isinstance(data, response) else str(data)
                     await websocket.send(data)
                     continue
@@ -61,7 +61,7 @@ class WSServer(object):
                         sessions[session_id] = AIBeingChatTask(session_id, template_id, self.audiotrans)
 
                 assert session_id in sessions, AIBeingException("session_id not in sessions")
-                aiSay = await sessions[session_id].async_generate(data, hook=AIBeingHookAsync(websocket, template_id))
+                aiSay = await sessions[session_id].async_generate(data, hook=AIBeingHookAsync(websocket, template_id), pt=pt)
                 await websocket.send(aiSay)
 
             except Exception as e:
@@ -106,11 +106,11 @@ class WSServer(object):
                 if len(message) == 0:
                     await websocket.send(response(protocol=protocol.exception, debug="should not empty").toStr())
                     continue
-                data, template_id, responseDirectly, session = self.handler.on_message(message)
+                data, template_id, pt, session = self.handler.on_message(message)
                 if session:
                     session_id = session
 
-                if responseDirectly:
+                if not pt:
                     data = data.toStr() if isinstance(data, response) else str(data)
                     await websocket.send(data)
                     continue
@@ -122,7 +122,7 @@ class WSServer(object):
                     if session_id not in sessions:
                         sessions[session_id] = AIBeingChatTask(session_id, template_id, self.audiotrans)
                 assert session_id in sessions, AIBeingException("session_id not in sessions")
-                aiSay = sessions[session_id].generate(data, hook=AIBeingHook(token_queue, template_id))
+                aiSay = sessions[session_id].generate(data, hook=AIBeingHook(token_queue, template_id), pt=pt)
                 await websocket.send(aiSay)
             except Exception as e:
                 if isinstance(e, WebSocketException):

@@ -18,6 +18,7 @@ from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
 from interact.llm.base import AIBeingBaseTask
 from interact.llm.hook import AIBeingHookAsync, AIBeingHook
+from interact.llm.template.story import storyfactory_system
 from interact.schema.chat import response
 from interact.schema.protocal import protocol
 from interact.llm.template import chat, analyze, codecot
@@ -26,11 +27,9 @@ from interact.llm.vector.client import VectorDB
 from interact.llm.functions import functions
 class AIBeingChatTask(AIBeingBaseTask):
     def  __init__(self, uid: str, template_id: int, text2speech: AudioTransform):
-        self.pure = True
         if template_id > 0:
             self.template = self.load_template(template_id)
             self.template_id = template_id
-            self.pure = False
 
         self.chat_list: List[Dict] = [self.system_message("You can start to chat now!")]
         self.uid = uid
@@ -41,6 +40,36 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._analyze_future_result = None
         self._wait_analyze_times = 0
         super().__init__(text2speech)
+
+    def gen_story(self, prompt_chains: List[str], theme: str, hook):
+        messages = [Any, Any]
+        story = ""
+        hook.send_raw(response(protocol=protocol.gen_story_start, debug="").toStr())
+        for i in prompt_chains:
+            messages[0] = self.system_message(storyfactory_system.format(system_theme=theme, story=story))
+            messages[1] = self.user_message(i)
+            logger.info("prompts {}".format(messages))
+            res = self.proxy(messages, None, 0.9, False)
+            part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "") + "\n"
+            hook.send_raw(response(protocol=protocol.gen_story_action, debug=part).toStr())
+            logger.info("gen_story: %s, prompt %s" % (part, i))
+        hook.send_raw(response(protocol=protocol.gen_story_end, debug="").toStr())
+        return story
+
+    async def async_gen_story(self, prompt_chains: List[str], theme: str, hook):
+        messages = [Any, Any]
+        story = ""
+        await hook.send_raw(response(protocol=protocol.gen_story_start, debug="").toStr())
+        for i in prompt_chains:
+            messages[0] = self.system_message(storyfactory_system.format(system_theme=theme, story=story))
+            messages[1] = self.user_message(i)
+            logger.info("prompts {}".format(messages))
+            res = await self.async_proxy(messages, None, 0.9, False)
+            part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "") + "\n"
+            await hook.send_raw(response(protocol=protocol.gen_story_action, debug=part).toStr())
+            logger.info("gen_story: %s, prompt %s" % (part, i))
+        await hook.send_raw(response(protocol=protocol.gen_story_end, debug="").toStr())
+        return story
 
     def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):
         sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.image_path))
@@ -104,19 +133,27 @@ class AIBeingChatTask(AIBeingBaseTask):
             res = await self.async_proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
     def generate(self, inputs, **kwargs) -> Any:
         hook = kwargs["hook"]
-        if isinstance(inputs, dict):
+        pt = kwargs["pt"]
+
+        if pt == protocol.chat_thinking:
             content = inputs["content"]
             file = inputs["file"]
             return self.codeinterpreter(content, file, hook)
 
-        if self.pure:
+        if pt == protocol.chat_pure:
             self.chat_list.append(self.user_message(inputs))
             res = self.proxy(self.chat_list[-8:], hook, 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
             return response(protocol=protocol.chat_response, debug=res).toStr()
 
-        if inputs == protocol.get_greeting:
+        if pt == protocol.gen_story:
+            theme = inputs["theme"]
+            prompts = inputs["prompts"]
+            assert isinstance(prompts, list), "prompts must be list"
+            return self.gen_story(prompts, theme, hook)
+
+        if pt == protocol.get_greeting:
             return self.greeting()
 
         start = time.time()
@@ -135,20 +172,27 @@ class AIBeingChatTask(AIBeingBaseTask):
 
     async def async_generate(self, inputs, **kwargs) -> Any:
         hook = kwargs["hook"]
-        # codeinterpreter
-        if isinstance(inputs, dict):
+        pt = kwargs["pt"]
+
+        if pt == protocol.chat_thinking:
             content = inputs["content"]
             file = inputs["file"]
             return await self.async_codeinterpreter(content, file, hook)
         # pure chat
-        if self.pure:
+        if pt == protocol.chat_pure:
             self.chat_list.append(self.user_message(inputs))
             res = await self.async_proxy(self.chat_list, hook, 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
             return response(protocol=protocol.chat_response, debug=res).toStr()
-        # chat
-        if inputs == protocol.get_greeting:
+
+        if pt == protocol.gen_story:
+            theme = inputs["theme"]
+            prompts = inputs["prompts"]
+            assert isinstance(prompts, list), "prompts must be list"
+            return await self.async_gen_story(prompts, theme, hook)
+
+        if pt == protocol.get_greeting:
             return self.greeting()
 
         self.chat_list.append(self.user_message(inputs))

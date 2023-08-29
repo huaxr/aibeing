@@ -78,37 +78,45 @@ class BaseHandler(object):
                               few_shot_content=few_shot_content,
                               prompt=prompt, character_prompt=character_prompt)
 
-    def process(self, js:{}) -> (Any, int, bool, str):
+    def process(self, js:{}) -> (Any, int, str, str):
         pt = js["pt"]
 
-        if pt == "chat_thinking":
+        if pt == protocol.chat_thinking:
             body = js["txt"]
             if isinstance(body, str):
                 body = json.loads(body)
-            return body, int(js["template_id"]), False, ""
+            return body, int(js["template_id"]), pt, ""
+
+        if pt == protocol.gen_story:
+            body = js["txt"]
+            if isinstance(body, str):
+                body = json.loads(body)
+            return body, int(js["template_id"]), pt, ""
+
+        if pt == protocol.get_greeting:
+            return "", int(js["template_id"]), pt, ""
 
         if pt == "login":
             session_id = js["txt"]
-            return response(protocol=protocol.login, debug="ok"), -1, True, session_id
+            return response(protocol=protocol.login, debug="ok"), -1, "", session_id
 
         if pt == "ping":
-            return response(protocol=protocol.pong, debug="ok"), -1, True, ""
+            return response(protocol=protocol.pong, debug="ok"), -1, "", ""
 
         if pt == "like":
             chat_id = js["txt"]
             update_chat_like(int(chat_id))
-            return response(protocol=protocol.like, debug="ok"), -1, True, ""
+            return response(protocol=protocol.like, debug="ok"), -1, "", ""
 
         if pt == "unlike":
             chat_id = js["txt"]
             update_chat_unlike(int(chat_id))
-            return response(protocol=protocol.unlike, debug="ok"), -1, True, ""
+            return response(protocol=protocol.unlike, debug="ok"), -1, "", ""
 
         if pt == "chat_req":
-            return js["txt"], int(js["template_id"]), False, ""
-
-        if pt == protocol.get_greeting or pt == protocol.get_continue_chat:
-            return pt, int(js["template_id"]), False, ""
+            if int(js["template_id"]) <= 0:
+                return js["txt"], int(js["template_id"]), protocol.chat_pure, ""
+            return js["txt"], int(js["template_id"]), pt, ""
 
         if pt == "create_template":
             data = js["txt"]
@@ -120,19 +128,19 @@ class BaseHandler(object):
             except Exception as e:
                 res = str(e)
 
-            return response(protocol=protocol.create_template_rsp, debug=res), -1, True, ""
+            return response(protocol=protocol.create_template_rsp, debug=res), -1, "", ""
 
         if pt == "get_template_list":
             res = get_template_list()
             list = []
             for i in res:
                 list.append(i.model_to_dict())
-            return response(protocol=protocol.get_template_list_rsp, debug=list), -1, True, ""
+            return response(protocol=protocol.get_template_list_rsp, debug=list), -1, "", ""
 
         if pt == "get_template_by_id":
             id = js["txt"]
             res = get_template_by_id(id)
-            return response(protocol=protocol.get_template_by_id_rsp, debug=res.model_to_dict()), -1, True, ""
+            return response(protocol=protocol.get_template_by_id_rsp, debug=res.model_to_dict()), -1, "", ""
 
         if pt == "update_template":
             id = int(js["template_id"])
@@ -144,7 +152,7 @@ class BaseHandler(object):
                 res = update_template(id, model)
             except Exception as e:
                 res = "update_template error:" + str(e)
-            return response(protocol=protocol.update_template_rsp, debug=res), -1, True, ""
+            return response(protocol=protocol.update_template_rsp, debug=res), -1, "", ""
 
         if pt == "flush_cache":
             id = int(js["template_id"])
@@ -152,6 +160,6 @@ class BaseHandler(object):
             t = Template.model2template(i)
             task = AIBeingGreetingTask(AudioTransform(config.audio_save_path), t, 3600)
             task.generate()
-            return response(protocol=protocol.flush_cache_rsp, debug=""), -1, True, ""
+            return response(protocol=protocol.flush_cache_rsp, debug=""), -1, "", ""
 
         raise RuntimeError("unknown pt: {}".format(pt))

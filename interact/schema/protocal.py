@@ -23,7 +23,6 @@ class protocol:
     like = "like"
     unlike = "unlike"
 
-    get_greeting = "get_greeting"
     get_continue_chat = "get_continue_chat"
     pure_chat = "pure_chat"
 
@@ -31,4 +30,13 @@ class protocol:
     thinking_error = "thinking_error"
     thinking_image = "thinking_image"
     thinking_stop = "thinking_stop"
+
+    gen_story_start = "gen_story_start"
+    gen_story_action = "chat_rsp"
+    gen_story_end = "gen_story_end"
+
+    chat_thinking = "chat_thinking"
+    chat_pure = "chat_pure"
+    gen_story = "gen_story"
+    get_greeting = "get_greeting"
 

@@ -23,7 +23,9 @@ async def send_message():
         while True:
             message = input("请输入消息：")
             message = json.dumps(
-                {"pt": "chat_thinking", "template_id": -1, "txt": {"content": message, "file": "/tmp/iris.csv"}})
+                # {"pt": "chat_thinking", "template_id": -1, "txt": {"content": message, "file": "/tmp/iris.csv"}})
+                {"pt": "gen_story", "template_id": -1, "txt": {"theme": "大禹治水", "prompts":["人物开场", "场景描述", "煽情对话"]}})
+
             await websocket.send(message)
 
             while True:

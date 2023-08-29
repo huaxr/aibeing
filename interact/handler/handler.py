@@ -14,12 +14,12 @@ class StreamHandler(BaseHandler):
     def __init__(self, audiotrans: AudioTransform=None):
         super().__init__(audiotrans)
 
-    def on_message(self, message) -> (Any, int, bool, str):
+    def on_message(self, message) -> (Any, int, str, str):
         try:
             js = json.loads(message)
         except:
             # when debug locally, the message is plain text, otherwise it is json
-            return message, 1, False, ""
+            return message, 1, "local", ""
 
         pt = js["pt"]
 
@@ -28,7 +28,7 @@ class StreamHandler(BaseHandler):
             res = self.audiotrans.audio2text(file)
             if len(res.strip()) == 0:
                 raise AIBeingException("audio2text failed, try again")
-            return res, int(js["template_id"]), False, ""
+            return res, int(js["template_id"]), pt, ""
 
         return self.process(js)
 
