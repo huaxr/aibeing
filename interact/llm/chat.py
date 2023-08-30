@@ -65,7 +65,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             # part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "")
             self.chat_list.append(self.ai_message(res))
             self.chat_list = self.clip_tokens(self.chat_list)
-            await hook.send_text(protocol.gen_story_action, "主题: {}, prompt:{} \n生成结果:{}".format(theme, i, part))
+            await hook.send_text(protocol.gen_story_action, "主题: {}, prompt:{} \n生成结果:{}".format(theme, i, res))
         return response(protocol=protocol.gen_story_end, debug="").toStr()
 
     def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):
