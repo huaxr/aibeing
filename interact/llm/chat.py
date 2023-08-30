@@ -180,6 +180,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         if pt == protocol.chat_thinking:
             content = inputs["content"]
             file = inputs["file"]
+            logger.info("chat thinking: {}".format(inputs))
             return await self.async_codeinterpreter(content, file, hook)
         # pure chat
         if pt == protocol.chat_pure:
