@@ -145,7 +145,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             model_name = inputs["model_name"]
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
-            return self.gen_story(prompts, hook, model_name=model_name)
+            return self.gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
 
         if pt == protocol.chat_pure:
             self.chat_list.append(self.user_message(inputs))
@@ -196,7 +196,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             model_name = inputs["model_name"]
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
-            return await self.async_gen_story(prompts, hook, temperature=temperature, model_name=model_name)
+            return await self.async_gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
 
         if pt == protocol.get_greeting:
             return self.greeting()
