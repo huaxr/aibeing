@@ -28,11 +28,11 @@ async def send_message():
 
             await websocket.send(message)
 
-            while True:
-                response = await websocket.recv()
-                data = json.loads(response)
-                print(data)
-                break
+            # while True:
+            #     response = await websocket.recv()
+            #     data = json.loads(response)
+            #     print(data)
+            #     break
 
 
 asyncio.get_event_loop().run_until_complete(send_message())

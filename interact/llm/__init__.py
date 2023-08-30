@@ -13,6 +13,7 @@ def check_running(func):
                 res = func(self, *args, **kwargs)
             finally:
                 delattr(self, func_flag)
-            return res
+            if res:
+                return res
         return response(protocol=protocol.exception, debug="请等待输出完毕再输入...".format(func_flag)).toStr()
     return wrapper
