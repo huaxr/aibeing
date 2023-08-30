@@ -287,7 +287,7 @@ class AIBeingBaseTask(object):
             res = response_message["choices"][0]["message"]["content"]
             return res
 
-    async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False, functions: List=None, model_name:str = "msai") -> Any:
+    async def async_proxy(self, messages:List, hook:Union[Hook,None]=None, temperature:float=0.7, streaming:bool=False, functions: List=None, model_name:str = "msai") -> Any:
         assert len(messages) > 0, "messages length must > 0"
         if functions:
             temperature = 0.03

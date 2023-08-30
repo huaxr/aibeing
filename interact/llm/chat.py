@@ -60,7 +60,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         for i in prompt_chains:
             self.chat_list.append(self.user_message(i))
             self.chat_list = self.chat_list[1:]
-            res = await self.async_proxy(self.chat_list, None, temperature, False, model_name=model_name)
+            res = await self.async_proxy(self.chat_list, temperature=temperature, streaming=False, model_name=model_name)
             self.chat_list.append(self.ai_message(res))
             self.chat_list = self.clip_tokens(self.chat_list)
             await hook.send_text(protocol.gen_story_action, "prompt:{} \n生成结果\n:{}".format(i, res))
