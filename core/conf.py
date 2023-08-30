@@ -40,9 +40,6 @@ class Config:
     @property
     def llm_jupyter_port(self) -> int:
         return self.data["llm"]["jupyter_port"]
-    @property
-    def llm_addr(self) -> str:
-        return self.data["llm"]["llm_addr"]
 
     @property
     def llm_max_token(self) -> int:

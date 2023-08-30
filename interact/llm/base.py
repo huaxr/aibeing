@@ -134,16 +134,18 @@ class AIBeingBaseTask(object):
         if model_name == "msai":
             headers["api-key"] = os.environ.get("PROXY_KEY")
             data = {"messages": messages, "stream": streaming, "temperature": temperature}
+            llm_addr = "http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-07-01-preview"
         elif model_name.startswith("gpt"):
             headers["Authorization"] = "Bearer " + os.environ.get("OPENAI_API_KEY")
             assert model_name in ["gpt-4", "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4-32k"]
             data = {"messages": messages, "stream": streaming, "temperature": temperature, "model": model_name}
+            llm_addr = "https://api.openai.com/v1/chat/completions"
         else:
             raise AIBeingException("unknown model_name {}".format(model_name))
 
         if functions:
             data["functions"] = functions
-        return headers, data, streaming
+        return headers, data, streaming, llm_addr
 
     def agent(self, response_message:dict) -> dict:
         reason = response_message["choices"][0]["finish_reason"]
@@ -237,12 +239,12 @@ class AIBeingBaseTask(object):
         if functions:
             temperature = 0.03
 
-        headers, data, streaming = self.prepare_proxy_header_data(messages, streaming, temperature, functions, model_name=model_name)
+        headers, data, streaming, llm_addr = self.prepare_proxy_header_data(messages, streaming, temperature, functions, model_name=model_name)
         if streaming:
             if hook.is_pure:
                 hook.stream_pure_start()
 
-            response = requests.post(config.llm_addr, headers=headers, json=data, stream=True)
+            response = requests.post(llm_addr, headers=headers, json=data, stream=True)
             if response.status_code != 200:
                 raise AIBeingException(f"proxy status code is: {response.status_code}, response is: {response.text}")
 
@@ -270,7 +272,7 @@ class AIBeingBaseTask(object):
                         else:
                             hook.stream_chat_token(content)
         else:
-            response = requests.post(config.llm_addr, headers=headers, json=data, stream=False)
+            response = requests.post(llm_addr, headers=headers, json=data, stream=False)
             if response.status_code != 200:
                 raise AIBeingException(f"proxy status code is: {response.status_code}, response is: {response.text}")
 
@@ -286,7 +288,9 @@ class AIBeingBaseTask(object):
         if functions:
             temperature = 0.03
 
-        headers, data, streaming = self.prepare_proxy_header_data(messages, streaming, temperature, functions, model_name=model_name)
+        headers, data, streaming, llm_addr = self.prepare_proxy_header_data(messages, streaming, temperature, functions, model_name=model_name)
+
+        logger.info("headers, data, streaming {} {} {}".format(headers, data, streaming))
         async with aiohttp.ClientSession() as session:
             if streaming:
                 # 手动触发
@@ -295,7 +299,7 @@ class AIBeingBaseTask(object):
                 else:
                     await hook.stream_chat_token("{")
 
-                async with session.post(config.llm_addr, headers=headers, json=data, timeout=None) as response:
+                async with session.post(llm_addr, headers=headers, json=data, timeout=None) as response:
                     if response.status != 200:
                         response_text = await response.text()
                         raise AIBeingException(f"proxy status code is: {response.status}, response is: {response_text}")
@@ -331,7 +335,7 @@ class AIBeingBaseTask(object):
                                     await hook.stream_chat_token(content)
 
             else:
-                async with session.post(config.llm_addr, headers=headers, json=data, timeout=None) as response:
+                async with session.post(llm_addr, headers=headers, json=data, timeout=None) as response:
                     if response.status != 200:
                         response_text = await response.text()
                         raise AIBeingException(f"proxy status code is: {response.status}, response is: {response_text}")
