@@ -110,7 +110,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         while 1:
             typ = res.pop("exec_type")
             result = res.pop("exec_result")
-            logger.info(res)
+            logger.info("call result:{}".format(res))
             if typ == "stop":
                 ai = self.ai_message(result)
                 self.chat_list.append(ai)

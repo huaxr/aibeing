@@ -192,7 +192,7 @@ class AIBeingBaseTask(object):
 
     async def async_agent(self, response_message:dict) -> dict:
         reason = response_message["choices"][0]["finish_reason"]
-        logger.info("finish_reason:{}".format(reasone))
+        logger.info("finish_reason:{}".format(reason))
         call_res = response_message["choices"][0]["message"]
         if reason == "function_call":
             # get exec result
