@@ -60,6 +60,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         for i in prompt_chains:
             self.chat_list.append(self.user_message(i))
             self.chat_list = self.chat_list[1:]
+            logger.info(self.chat_list )
             res = await self.async_proxy(self.chat_list, None, 0.9, False)
             # part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "")
             self.chat_list.append(self.ai_message(res))
