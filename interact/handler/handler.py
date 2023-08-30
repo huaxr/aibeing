@@ -19,7 +19,7 @@ class StreamHandler(BaseHandler):
             js = json.loads(message)
         except:
             # when debug locally, the message is plain text, otherwise it is json
-            return message, 1, "local", ""
+            return message, 1, "local", "local_session"
 
         pt = js["pt"]
 
@@ -32,12 +32,12 @@ class StreamHandler(BaseHandler):
 
         return self.process(js)
 
-    async def async_on_message(self, message) -> (str, int, bool, str):
+    async def async_on_message(self, message) -> (Any, int, bool, str):
         try:
             js = json.loads(message)
         except:
             # when debug locally, the message is plain text, otherwise it is json
-            return message, 1, False
+            return message, 1, "local", "local_session"
 
         pt = js["pt"]
         if pt == "chat_audio":

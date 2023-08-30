@@ -10,6 +10,7 @@ import random
 import time
 from typing import List, Any, Dict
 
+from . import check_running
 from core.conf import config
 from core.log import logger
 from core.cache import redis_cli
@@ -25,6 +26,7 @@ from interact.llm.template import chat, analyze, codecot
 from interact.llm.template.template import  Vector
 from interact.llm.vector.client import VectorDB
 from interact.llm.functions import functions
+
 class AIBeingChatTask(AIBeingBaseTask):
     def  __init__(self, uid: str, template_id: int, text2speech: AudioTransform):
         if template_id > 0:
@@ -68,7 +70,6 @@ class AIBeingChatTask(AIBeingBaseTask):
             logger.info("gen_story: %s, prompt %s" % (part, i))
             story += part
         return response(protocol=protocol.gen_story_end, debug="").toStr()
-
 
     def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):
         sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.image_path))
@@ -130,6 +131,8 @@ class AIBeingChatTask(AIBeingBaseTask):
             self.chat_list.append(ai)
             self.chat_list.append(func)
             res = await self.async_proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
+
+    @check_running
     def generate(self, inputs, **kwargs) -> Any:
         hook = kwargs["hook"]
         pt = kwargs["pt"]
@@ -139,18 +142,18 @@ class AIBeingChatTask(AIBeingBaseTask):
             file = inputs["file"]
             return self.codeinterpreter(content, file, hook)
 
+        if pt == protocol.gen_story:
+            theme = inputs["theme"]
+            prompts = inputs["prompts"]
+            assert isinstance(prompts, list), "prompts must be list"
+            return self.gen_story(prompts, theme, hook)
+
         if pt == protocol.chat_pure:
             self.chat_list.append(self.user_message(inputs))
             res = self.proxy(self.chat_list[-8:], hook, 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
             return response(protocol=protocol.chat_response, debug=res).toStr()
-
-        if pt == protocol.gen_story:
-            theme = inputs["theme"]
-            prompts = inputs["prompts"]
-            assert isinstance(prompts, list), "prompts must be list"
-            return self.gen_story(prompts, theme, hook)
 
         if pt == protocol.get_greeting:
             return self.greeting()
@@ -169,6 +172,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         id = create_chat(ChatHistoryModel(template_id=self.template_id, uid=self.uid, input=inputs, output=reply, mp3=os.path.basename(filename), cost_time=time.time() - start, emotion=emotion, cost=0))
         return response(protocol=protocol.chat_response, debug=reply, style=emotion, audio_url=os.path.basename(filename), template_id=self.template_id, chat_id=id).toStr()
 
+    @check_running
     async def async_generate(self, inputs, **kwargs) -> Any:
         hook = kwargs["hook"]
         pt = kwargs["pt"]

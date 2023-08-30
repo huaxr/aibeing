@@ -57,11 +57,11 @@ class WSServer(object):
                 # when pure chat, template_id is -1
                 if task is None or template_id != current_template_id:
                     current_template_id = template_id
-                    if session_id not in sessions:
-                        sessions[session_id] = AIBeingChatTask(session_id, template_id, self.audiotrans)
+                    if not sessions.get(session_id):
+                        sessions.put(session_id, AIBeingChatTask(session_id, template_id, self.audiotrans))
 
-                assert session_id in sessions, AIBeingException("session_id not in sessions")
-                aiSay = await sessions[session_id].async_generate(data, hook=AIBeingHookAsync(websocket, template_id), pt=pt)
+                assert sessions.get(session_id) is not None, AIBeingException("session_id not in sessions")
+                aiSay = await sessions.get(session_id).async_generate(data, hook=AIBeingHookAsync(websocket, template_id), pt=pt)
                 await websocket.send(aiSay)
 
             except Exception as e:
@@ -119,10 +119,10 @@ class WSServer(object):
                     continue
                 if task is None or template_id != current_template_id:
                     current_template_id = template_id
-                    if session_id not in sessions:
-                        sessions[session_id] = AIBeingChatTask(session_id, template_id, self.audiotrans)
-                assert session_id in sessions, AIBeingException("session_id not in sessions")
-                aiSay = sessions[session_id].generate(data, hook=AIBeingHook(token_queue, template_id), pt=pt)
+                    if not sessions.get(session_id):
+                        sessions.put(session_id, AIBeingChatTask(session_id, template_id, self.audiotrans))
+                assert sessions.get(session_id) is not None, AIBeingException("session_id not in sessions")
+                aiSay = sessions.get(session_id).generate(data, hook=AIBeingHook(token_queue, template_id), pt=pt)
                 await websocket.send(aiSay)
             except Exception as e:
                 if isinstance(e, WebSocketException):
