@@ -5,12 +5,6 @@ Automatically loads environment variables from .env file
 
 from typing import Optional
 
-from dotenv import load_dotenv
-
-# .env file
-load_dotenv("./.env")
-
-
 class CodeBoxSettings():
     """
     CodeBox API Config
