@@ -58,11 +58,11 @@ class AIBeingChatTask(AIBeingBaseTask):
     async def async_gen_story(self, prompt_chains: List[str], theme: str, hook: AIBeingHookAsync):
         await hook.send_text(protocol.gen_story_start, "")
         for i in prompt_chains:
-            self.chat_list[0] = self.system_message(storyfactory_system.format(system_theme=theme))
             self.chat_list.append(self.user_message(i))
+            self.chat_list = self.chat_list[1:]
             res = await self.async_proxy(self.chat_list, None, 0.9, False)
-            part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "")
-            self.chat_list.append(self.ai_message(part))
+            # part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "")
+            self.chat_list.append(self.ai_message(res))
             self.chat_list = self.clip_tokens(self.chat_list)
             await hook.send_text(protocol.gen_story_action, "主题: {}, prompt:{} \n生成结果:{}".format(theme, i, part))
         return response(protocol=protocol.gen_story_end, debug="").toStr()
