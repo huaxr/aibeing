@@ -104,14 +104,20 @@ class AIBeingChatTask(AIBeingBaseTask):
     async def async_codeinterpreter(self, user_input: str, file: str, hook: AIBeingHookAsync):
         sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.image_path))
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
+        logger.info(sys)
+        logger.info(user)
         self.chat_list[0] = sys
         self.chat_list.append(user)
         res = await self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
         while 1:
             typ = res.pop("exec_type")
             result = res.pop("exec_result")
+            logger.info("exec_result:{}".format(result))
+
             if typ == "stop":
-                # stop means ask user some questions
+                ai = self.ai_message(result)
+                logger.info(ai)
+                self.chat_list.append(ai)
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
             if typ == "text":
@@ -124,6 +130,8 @@ class AIBeingChatTask(AIBeingBaseTask):
             name = function_call["name"]
             ai = self.ai_message(content, function_call)
             func = self.func_message(result, name)
+            logger.info(ai)
+            logger.info(func)
             self.chat_list.append(ai)
             self.chat_list.append(func)
             res = await self.async_proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
