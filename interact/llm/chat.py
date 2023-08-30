@@ -143,6 +143,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             prompts = inputs["prompts"]
             temperature = inputs["temperature"]
             model_name = inputs["model_name"]
+            logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return self.gen_story(prompts, hook, temperature=temperature, model_name=model_name)
 
@@ -192,6 +193,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             prompts = inputs["prompts"]
             temperature = inputs["temperature"]
             model_name = inputs["model_name"]
+            logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return await self.async_gen_story(prompts, hook, temperature=temperature, model_name=model_name)
 

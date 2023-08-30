@@ -145,7 +145,7 @@ class AIBeingBaseTask(object):
             assert model_name in ["gpt-4", "gpt-3.5-turbo", "gpt-3.5-turbo-16k", "gpt-4-32k"]
             data = {"messages": messages, "stream": streaming, "temperature": temperature, "model": model_name}
         else:
-            raise AIBeingException("unknown llm_type")
+            raise AIBeingException("unknown model_name {}".format(model_name))
 
         if functions:
             data["functions"] = functions
