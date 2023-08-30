@@ -7,8 +7,8 @@ import requests
 proxy_host = "39169.applegamee.com"
 proxy_port = 39169
 # 代理服务器的用户名和密码
-proxy_username = "HOST&PEER"
-proxy_password = "eplcgame.com"
+proxy_username = "eplcgame.com"
+proxy_password = "04e13d37-6b8c-3c50-b9e2-4454210d633b"
 # 构造代理的 URL
 proxy_url = "http://{}:{}@{}:{}".format(proxy_username, proxy_password, proxy_host, proxy_port)
 # 目标网址
