@@ -9,11 +9,9 @@ from io import BytesIO
 from typing import Any, Union, List, Optional
 
 import aiohttp
-import langchain
 import requests
 import tiktoken
 from PIL import Image
-from langchain.cache import InMemoryCache
 
 from core.conf import config
 from core.db import get_template_by_id, TemplateModel
@@ -34,10 +32,6 @@ class AIBeingBaseTask(object):
         raise NotImplementedError
     async def async_generate(self, *args, **kwargs) -> Any:
         raise NotImplementedError
-
-    @classmethod
-    def enable_cache(cls):
-        langchain.llm_cache = InMemoryCache()
 
     def get_json(self, text) -> {}:
         start_index = text.find("{")
