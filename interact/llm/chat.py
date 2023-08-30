@@ -44,31 +44,27 @@ class AIBeingChatTask(AIBeingBaseTask):
         super().__init__(text2speech)
 
     def gen_story(self, prompt_chains: List[str], theme: str, hook: AIBeingHook):
-        messages = [Any, Any]
-        story = ""
         hook.send_text(protocol.gen_story_start, "")
         for i in prompt_chains:
-            messages[0] = self.system_message(storyfactory_system.format(system_theme=theme, story=story))
-            messages[1] = self.user_message(i)
-            res = self.proxy(messages, None, 0.9, False)
-            part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "") + "\n"
+            self.chat_list[0] = self.system_message(storyfactory_system.format(system_theme=theme))
+            self.chat_list.append(self.user_message(i))
+            res = self.proxy(self.chat_list, None, 0.9, False)
+            part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "")
+            self.chat_list.append(self.ai_message(part))
+            self.chat_list = self.clip_tokens(self.chat_list)
             hook.send_text(protocol.gen_story_action, part)
-            logger.info("gen_story: %s, prompt %s" % (part, i))
-            story += part
         return response(protocol=protocol.gen_story_end, debug="").toStr()
 
     async def async_gen_story(self, prompt_chains: List[str], theme: str, hook: AIBeingHookAsync):
-        messages = [Any, Any]
-        story = ""
         await hook.send_text(protocol.gen_story_start, "")
         for i in prompt_chains:
-            messages[0] = self.system_message(storyfactory_system.format(system_theme=theme, story=story))
-            messages[1] = self.user_message(i)
-            res = await self.async_proxy(messages, None, 0.9, False)
-            part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "") + "\n"
+            self.chat_list[0] = self.system_message(storyfactory_system.format(system_theme=theme))
+            self.chat_list.append(self.user_message(i))
+            res = await self.async_proxy(self.chat_list, None, 0.9, False)
+            part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "")
+            self.chat_list.append(self.ai_message(part))
+            self.chat_list = self.clip_tokens(self.chat_list)
             await hook.send_text(protocol.gen_story_action, "主题: {}, prompt:{} \n生成结果:{}".format(theme, i, part))
-            logger.info("gen_story: %s, prompt %s" % (part, i))
-            story += part
         return response(protocol=protocol.gen_story_end, debug="").toStr()
 
     def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):

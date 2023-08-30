@@ -97,6 +97,15 @@ class AIBeingBaseTask(object):
                 num_tokens += len(self.encoding.encode(content))
         return num_tokens
 
+    def clip_tokens(self, chat_list):
+        token_count = self._tokens(chat_list)
+        if token_count > config.llm_msai_max_token:
+            if len(chat_list) > 3:  # 5 7 9
+                chat_list = [chat_list[0]] + chat_list[-(len(chat_list) - 1):]
+            else:
+                chat_list = [chat_list[0]]
+        return chat_list
+
     def model2template(self, template_model: TemplateModel) -> Template:
         name = template_model.name
         avatar = template_model.avatar
@@ -228,10 +237,6 @@ class AIBeingBaseTask(object):
         if functions:
             temperature = 0.03
 
-        token_count = self._tokens(messages)
-        if token_count > config.llm_msai_max_token:
-            messages = messages[2:]
-
         headers, data, streaming = self.prepare_header_data(messages, streaming, temperature, functions)
         if streaming:
             if hook.is_pure:
@@ -278,10 +283,6 @@ class AIBeingBaseTask(object):
 
     async def async_proxy(self, messages:List, hook:Union[Hook,None], temperature:float=0.7, streaming:bool=False, functions: List=None) -> Any:
         assert len(messages) > 0, "messages length must > 0"
-        token_count = self._tokens(messages)
-        if token_count > config.llm_msai_max_token:
-            messages = messages[2:]
-
         headers, data, streaming = self.prepare_header_data(messages, streaming, temperature, functions)
         async with aiohttp.ClientSession() as session:
             if streaming:
