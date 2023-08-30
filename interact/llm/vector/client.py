@@ -23,7 +23,7 @@ if config.llm_embedding_type == "msai":
         from FlagEmbedding import FlagModel
         model = FlagModel(config.llm_embedding if config.llm_embedding else 'BAAI/bge-large-zh')
     except:
-        raise RuntimeError("model not found")
+        logger.error("model not found")
 
 class VectorDB(Vector):
     def __init__(self, typ: str = "openai"):
