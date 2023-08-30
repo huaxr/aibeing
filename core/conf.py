@@ -30,8 +30,8 @@ class Config:
         return self.data["llm"]["embedding"]
 
     @property
-    def llm_type(self) -> str:
-        return self.data["llm"]["type"]
+    def llm_embedding_type(self) -> str:
+        return self.data["llm"]["embed_type"]
 
     @property
     def llm_async(self) -> bool:
@@ -40,14 +40,13 @@ class Config:
     @property
     def llm_jupyter_port(self) -> int:
         return self.data["llm"]["jupyter_port"]
+    @property
+    def llm_addr(self) -> str:
+        return self.data["llm"]["llm_addr"]
 
     @property
-    def llm_msai_addr(self) -> str:
-        return self.data["llm"]["msai_addr"]
-
-    @property
-    def llm_msai_max_token(self) -> int:
-        return self.data["llm"]["msai_max_token"]
+    def llm_max_token(self) -> int:
+        return self.data["llm"]["llm_max_token"]
 
     @property
     def audio_save_path(self) -> str:

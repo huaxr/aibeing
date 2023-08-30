@@ -35,7 +35,7 @@ class AIBeingChatTask(AIBeingBaseTask):
 
         self.chat_list: List[Dict] = [self.system_message("You can start to chat now!")]
         self.uid = uid
-        self.vector = VectorDB(config.llm_type)
+        self.vector = VectorDB(config.llm_embedding_type)
         # self.search = GoogleAPIWrapper()
         # for async only
         self._analyze_future = None
@@ -43,29 +43,27 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._wait_analyze_times = 0
         super().__init__(text2speech)
 
-    def gen_story(self, prompt_chains: List[str], theme: str, hook: AIBeingHook):
+    def gen_story(self, prompt_chains: List[str], hook: AIBeingHook, temperature:float=0.9, model_name:str="msai"):
         hook.send_text(protocol.gen_story_start, "")
         for i in prompt_chains:
-            self.chat_list[0] = self.system_message(storyfactory_system.format(system_theme=theme))
             self.chat_list.append(self.user_message(i))
-            res = self.proxy(self.chat_list, None, 0.9, False)
-            part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "")
-            self.chat_list.append(self.ai_message(part))
+            self.chat_list = self.chat_list[1:]
+            res = self.proxy(self.chat_list, None, temperature, False, model_name=model_name)
+            self.chat_list.append(self.ai_message(res))
             self.chat_list = self.clip_tokens(self.chat_list)
-            hook.send_text(protocol.gen_story_action, part)
+            hook.send_text(protocol.gen_story_action, res)
+        self.chat_list = []
         return response(protocol=protocol.gen_story_end, debug="").toStr()
 
-    async def async_gen_story(self, prompt_chains: List[str], theme: str, hook: AIBeingHookAsync):
+    async def async_gen_story(self, prompt_chains: List[str], hook: AIBeingHookAsync, temperature:float=0.9, model_name:str="msai"):
         await hook.send_text(protocol.gen_story_start, "")
         for i in prompt_chains:
             self.chat_list.append(self.user_message(i))
             self.chat_list = self.chat_list[1:]
-            logger.info(self.chat_list )
-            res = await self.async_proxy(self.chat_list, None, 0.9, False)
-            # part = "  " + res.strip().replace("\n", "").replace("\t", "").replace(" ", "").replace("`", "")
+            res = await self.async_proxy(self.chat_list, None, temperature, False, model_name=model_name)
             self.chat_list.append(self.ai_message(res))
             self.chat_list = self.clip_tokens(self.chat_list)
-            await hook.send_text(protocol.gen_story_action, "主题: {}, prompt:{} \n生成结果:{}".format(theme, i, res))
+            await hook.send_text(protocol.gen_story_action, "prompt:{} \n生成结果\n:{}".format(i, res))
         self.chat_list = []
         return response(protocol=protocol.gen_story_end, debug="").toStr()
 
@@ -143,8 +141,10 @@ class AIBeingChatTask(AIBeingBaseTask):
         if pt == protocol.gen_story:
             theme = inputs["theme"]
             prompts = inputs["prompts"]
+            temperature = inputs["temperature"]
+            model_name = inputs["model_name"]
             assert isinstance(prompts, list), "prompts must be list"
-            return self.gen_story(prompts, theme, hook)
+            return self.gen_story(prompts, hook, temperature=temperature, model_name=model_name)
 
         if pt == protocol.chat_pure:
             self.chat_list.append(self.user_message(inputs))
@@ -190,8 +190,10 @@ class AIBeingChatTask(AIBeingBaseTask):
         if pt == protocol.gen_story:
             theme = inputs["theme"]
             prompts = inputs["prompts"]
+            temperature = inputs["temperature"]
+            model_name = inputs["model_name"]
             assert isinstance(prompts, list), "prompts must be list"
-            return await self.async_gen_story(prompts, theme, hook)
+            return await self.async_gen_story(prompts, hook, temperature=temperature, model_name=model_name)
 
         if pt == protocol.get_greeting:
             return self.greeting()

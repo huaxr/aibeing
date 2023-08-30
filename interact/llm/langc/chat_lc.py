@@ -46,7 +46,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         self.text2speech = text2speech
         self.uid = uid
         self.template_id = template_id
-        self.vector = VectorDB(config.llm_type)
+        self.vector = VectorDB(config.llm_embedding_type)
         self.search = GoogleAPIWrapper()
 
         # for async only

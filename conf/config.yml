@@ -17,10 +17,11 @@ redis:
 llm:
   async: true
   embedding: /root/embedding
-  type: msai # or openai
+  embed_type: msai # or openai
   jupyter_port : 10010
-  msai_addr: http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-07-01-preview
-  msai_max_token: 8000
+  # llm_addr: http://msai.tal.com/openai/deployments/gpt-4/chat/completions?api-version=2023-07-01-preview
+  llm_max_token: 8000
+  llm_addr: https://api.openai.com/v1/chat/completions
 
 audio:
   upload_path: "/var/www/uploads/"

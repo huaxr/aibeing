@@ -20,7 +20,7 @@ class ScriptDB(VectorDB):
 
 def main():
     collection = "mixiaoquan"
-    vdb = ScriptDB(config.llm_type)
+    vdb = ScriptDB(config.llm_embedding_type)
     vdb.delete_collection(collection)
     vdb.create_collection(collection)
     # p = "/Users/huaxinrui/AIB/aibeing/data/mxq"

@@ -16,9 +16,9 @@ try:
 except:
     raise RuntimeError("chromadb not connect %s:%s" % (config.vector_host, config.vector_port))
 
-assert config.llm_type in ["openai", "msai"], "llm_type must be openai or flag"
+assert config.llm_embedding_type in ["openai", "msai"], "llm_type must be openai or flag"
 
-if config.llm_type == "msai":
+if config.llm_embedding_type == "msai":
     try:
         from FlagEmbedding import FlagModel
         model = FlagModel(config.llm_embedding if config.llm_embedding else 'BAAI/bge-large-zh')
@@ -88,7 +88,7 @@ class VectorDB(Vector):
 
 if __name__ == "__main__":
     collection = "mixiaoquan"
-    vdb = VectorDB(config.llm_type)
+    vdb = VectorDB(config.llm_embedding_type)
     vdb.delete_collection(collection)  #
     vdb.create_collection(collection)  #
     docs = ["我们一起来玩吧", "天青色等烟雨", "这雨下的可真大啊", "你知道我叫什么吗", "我是华心瑞"]
