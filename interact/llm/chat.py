@@ -113,7 +113,6 @@ class AIBeingChatTask(AIBeingBaseTask):
             logger.info(res)
             if typ == "stop":
                 ai = self.ai_message(result)
-                logger.info(ai)
                 self.chat_list.append(ai)
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
