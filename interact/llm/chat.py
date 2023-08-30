@@ -177,6 +177,8 @@ class AIBeingChatTask(AIBeingBaseTask):
         hook = kwargs["hook"]
         pt = kwargs["pt"]
 
+        logger.info(pt)
+
         if pt == protocol.chat_thinking:
             content = inputs["content"]
             file = inputs["file"]
