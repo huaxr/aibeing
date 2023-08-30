@@ -192,6 +192,7 @@ class AIBeingBaseTask(object):
 
     async def async_agent(self, response_message:dict) -> dict:
         reason = response_message["choices"][0]["finish_reason"]
+        logger.info("finish_reason:{}".format(reasone))
         call_res = response_message["choices"][0]["message"]
         if reason == "function_call":
             # get exec result
@@ -207,6 +208,7 @@ class AIBeingBaseTask(object):
 
             callable = available_functions[function_name+"_async"]
             exec_result = await callable(code)
+            logger.info("exec_result:{}".format(exec_result))
             if exec_result.type == "image/png":
                 image_bytes = base64.b64decode(exec_result.content)
                 # 将字节数据转换为 Image 对象（使用 Pillow 库）
