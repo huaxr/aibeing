@@ -10,7 +10,7 @@ proxy_port = 39169
 proxy_username = "HOST&PEER"
 proxy_password = "eplcgame.com"
 # 构造代理的 URL
-proxy_url = f"http://{proxy_username}:{proxy_password}@{proxy_host}:{proxy_port}"
+proxy_url = "http://{}:{}@{}:{}".format(proxy_username, proxy_password, proxy_host, proxy_port)
 # 目标网址
 target_url = "https://www.google.com"
 # 设置代理并发送请求
