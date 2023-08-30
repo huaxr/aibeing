@@ -201,6 +201,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         if pt == protocol.get_greeting:
             return self.greeting()
 
+        logger.info("xxxxxxxxxxxxxx")
         self.chat_list.append(self.user_message(inputs))
 
         if self._analyze_future is None:
