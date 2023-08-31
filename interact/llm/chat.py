@@ -87,7 +87,7 @@ class AIBeingChatTask(AIBeingBaseTask):
                 self.chat_list = self.chat_list[:0]
                 return response(protocol=protocol.thinking_error, debug="{}\n{}".format(content, result) + "由于出现错误,当前消息上下文以全部清空,错误自修复暂未开发").toStr()
             if typ == "image/png":
-                hook.send_raw(response(protocol=protocol.thinking_image, debug=result))
+                hook.send_raw(response(protocol=protocol.thinking_image, file_name=result))
 
             function_call = res.pop("function_call")
             name = function_call["name"]
@@ -122,7 +122,7 @@ class AIBeingChatTask(AIBeingBaseTask):
                 return response(protocol=protocol.thinking_error, debug="{}\n{}".format(content, result)).toStr()
             if typ == "image/png":
                 logger.info("image 发送给客户端, {}".format(result))
-                await hook.send_raw(response(protocol=protocol.thinking_image, debug=result))
+                await hook.send_raw(response(protocol=protocol.thinking_image, file_name=result))
             function_call = res.pop("function_call")
             name = function_call["name"]
             ai = self.ai_message(content, function_call)

@@ -5,9 +5,10 @@ import json
 from interact.schema.protocal import protocol
 
 class response:
-    def __init__(self, protocol:str=None,  debug =None, style=None, audio_url=None, template_id=None, chat_id=None):
+    def __init__(self, protocol:str=None,  debug =None, style=None, audio_url=None, template_id=None, chat_id=None, file_name=None):
         self.pt = protocol
         self.content = debug
+        self.file_name = file_name
         self.style = style
         self.audio_url = audio_url
         self.template_id = template_id
@@ -27,5 +28,7 @@ class response:
             res["template_id"] = -1
         if self.chat_id != None:
             res["chat_id"] = self.chat_id
+        if self.file_name != None:
+            res["file_name"] = self.file_name
         return json.dumps(res)
 
