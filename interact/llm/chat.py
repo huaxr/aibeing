@@ -82,12 +82,12 @@ class AIBeingChatTask(AIBeingBaseTask):
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
             if typ == "text":
-                hook.send_raw(response(protocol=protocol.thinking_now, debug=content + "\n" + result).toStr())
+                hook.send_raw(response(protocol=protocol.thinking_now, debug=content + "\n" + result))
             if typ == "error":
                 self.chat_list = self.chat_list[:0]
-                return response(protocol=protocol.thinking_error, debug=content + "\n" + result).toStr()
+                return response(protocol=protocol.thinking_error, debug=content + "\n" + result + "\n" + "由于出现错误,当前消息上下文以全部清空,错误自修复暂未开发").toStr()
             if typ == "image/png":
-                hook.send_raw(response(protocol=protocol.thinking_image, debug=result).toStr())
+                hook.send_raw(response(protocol=protocol.thinking_image, debug=result))
 
             function_call = res.pop("function_call")
             name = function_call["name"]
@@ -114,11 +114,11 @@ class AIBeingChatTask(AIBeingBaseTask):
             content = res.pop("content")
             if typ == "text":
                 logger.info("text 发送给客户端")
-                await hook.send_raw(response(protocol=protocol.thinking_now, debug=content + "\n" + result))
+                await hook.send_raw(response(protocol=protocol.thinking_now, debug="{}\n{}".format(content, result)))
             if typ == "error":
                 logger.info("error 发送给客户端, 结束cot")
                 self.chat_list = self.chat_list[:0]
-                return response(protocol=protocol.thinking_error, debug=content + "\n" + result).toStr()
+                return response(protocol=protocol.thinking_error, debug="{}\n{}".format(content, result)).toStr()
             if typ == "image/png":
                 logger.info("image 发送给客户端, {}".format(result))
                 await hook.send_raw(response(protocol=protocol.thinking_image, debug=result))

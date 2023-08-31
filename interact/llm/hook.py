@@ -94,8 +94,8 @@ class AIBeingHook(Hook):
     def stream_pure_end(self) -> None:
         self.q.put(response(protocol=protocol.stream_end, template_id=self.template_id).toStr())
 
-    def send_raw(self, raw):
-        self.q.put(raw)
+    def send_raw(self, raw: response):
+        self.q.put(raw.toStr())
 
     def send_text(self, protocol, text):
         self.q.put(response(protocol=protocol, debug=text, template_id=self.template_id).toStr())
