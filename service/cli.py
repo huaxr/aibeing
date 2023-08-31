@@ -23,16 +23,16 @@ async def send_message():
         while True:
             message = input("请输入消息：")
             message = json.dumps(
-                # {"pt": "chat_thinking", "template_id": -1, "txt": {"content": message, "file": "/tmp/iris.csv"}})
-                {"pt": "gen_story", "template_id": -1, "txt": {"theme": "大禹治水", "prompts":["人物开场", "场景描述", "煽情对话"], "temperature":0.5, "model_name": "gpt-4"}})
+                {"pt": "chat_thinking", "template_id": -1, "txt": {"content": message, "file": "/tmp/iris.csv"}})
+                # {"pt": "gen_story", "template_id": -1, "txt": {"theme": "大禹治水", "prompts":["人物开场", "场景描述", "煽情对话"], "temperature":0.5, "model_name": "gpt-4"}})
 
             await websocket.send(message)
 
-            # while True:
-            #     response = await websocket.recv()
-            #     data = json.loads(response)
-            #     print(data)
-            #     break
+            while True:
+                response = await websocket.recv()
+                data = json.loads(response)
+                print(data)
+                break
 
 
 asyncio.get_event_loop().run_until_complete(send_message())

@@ -72,22 +72,20 @@ class AIBeingChatTask(AIBeingBaseTask):
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
-        logger.info(sys)
-        logger.info(user)
-        res = self.proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
+        res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
         while 1:
             result = res.pop("exec_result")
             typ = res.pop("exec_type")
             if typ == "stop":
                 ai = self.ai_message(result)
-                logger.info(ai)
                 self.chat_list.append(ai)
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
             if typ == "text":
-                hook.send_raw(response(protocol=protocol.thinking_now, debug=content).toStr())
+                hook.send_raw(response(protocol=protocol.thinking_now, debug=content + "\n" + result).toStr())
             if typ == "error":
-                return response(protocol=protocol.thinking_error, debug=content + result).toStr()
+                self.chat_list = self.chat_list[:0]
+                return response(protocol=protocol.thinking_error, debug=content + "\n" + result).toStr()
             if typ == "image/png":
                 hook.send_raw(response(protocol=protocol.thinking_image, debug=result).toStr())
 
@@ -97,8 +95,6 @@ class AIBeingChatTask(AIBeingBaseTask):
             func = self.func_message(result, name)
             self.chat_list.append(ai)
             self.chat_list.append(func)
-            logger.info(ai)
-            logger.info(func)
             res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
 
     async def async_codeinterpreter(self, user_input: str, file: str, hook: AIBeingHookAsync):
@@ -106,20 +102,20 @@ class AIBeingChatTask(AIBeingBaseTask):
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
-        res = await self.async_proxy(self.chat_list, None, 0.3, streaming=False, functions=functions)
+        res = await self.async_proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
         while 1:
             typ = res.pop("exec_type")
             result = res.pop("exec_result")
-            logger.info("call result:{}".format(res))
             if typ == "stop":
                 ai = self.ai_message(result)
                 self.chat_list.append(ai)
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
             if typ == "text":
-                await hook.send_raw(response(protocol=protocol.thinking_now, debug=content).toStr())
+                await hook.send_raw(response(protocol=protocol.thinking_now, debug=content + "\n" + result).toStr())
             if typ == "error":
-                return response(protocol=protocol.thinking_error, debug=content).toStr()
+                self.chat_list = self.chat_list[:0]
+                return response(protocol=protocol.thinking_error, debug=content + "\n" + result).toStr()
             if typ == "image/png":
                 await hook.send_raw(response(protocol=protocol.thinking_image, debug=result).toStr())
             function_call = res.pop("function_call")

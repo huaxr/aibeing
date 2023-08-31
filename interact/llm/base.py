@@ -150,6 +150,8 @@ class AIBeingBaseTask(object):
     def agent(self, response_message:dict) -> dict:
         reason = response_message["choices"][0]["finish_reason"]
         call_res = response_message["choices"][0]["message"]
+        logger.info("finish_reason:{} \n call_res:{}".format(reason, call_res))
+
         if reason == "function_call":
             # get exec result
             function_call_dict = call_res["function_call"]
@@ -164,8 +166,9 @@ class AIBeingBaseTask(object):
 
             callable = available_functions[function_name]
             exec_result = callable(code)
+            logger.info("exec_result type:{}".format(exec_result.type))
+
             if exec_result.type == "image/png":
-                logger.info("image received")
                 image_bytes = base64.b64decode(exec_result.content)
                 # 将字节数据转换为 Image 对象（使用 Pillow 库）
                 image = Image.open(BytesIO(image_bytes))
@@ -183,6 +186,8 @@ class AIBeingBaseTask(object):
             else:
                 raise RuntimeError("unknown exec result type:" + exec_result.type)
             call_res["exec_type"] = exec_result.type
+            # call_res.pop("role")
+            # call_res.pop("function_call")
             return call_res
         elif reason == "stop":  # cot end
             return {"exec_type": "stop", "exec_result": call_res["content"]}
@@ -209,22 +214,18 @@ class AIBeingBaseTask(object):
 
             callable = available_functions[function_name+"_async"]
             exec_result = await callable(code)
-            logger.info("exec_result:{}".format(exec_result))
+            logger.info("exec_result type:{}".format(exec_result.type))
             if exec_result.type == "image/png":
                 image_bytes = base64.b64decode(exec_result.content)
-                # 将字节数据转换为 Image 对象（使用 Pillow 库）
                 image = Image.open(BytesIO(image_bytes))
-                # 保存图片到文件
                 file = "{}output_image.{}.png".format(config.image_path, time.time())
                 image.save(file, "PNG")
                 call_res["exec_result"] = file
 
             elif exec_result.type == "text":
-                logger.info("exec result:{}".format(exec_result.content))
                 call_res["exec_result"] = exec_result.content
 
             elif exec_result.type == "error":
-                logger.error("exec error:{}".format(exec_result.content))
                 call_res["exec_result"] = exec_result.content
 
             else:
