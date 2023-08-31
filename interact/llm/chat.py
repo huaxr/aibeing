@@ -67,7 +67,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         return response(protocol=protocol.gen_story_end, debug="").toStr()
 
     def codeinterpreter(self, user_input: str, file: str, hook: AIBeingHook):
-        sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.image_path))
+        sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.working_path))
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
@@ -97,7 +97,7 @@ class AIBeingChatTask(AIBeingBaseTask):
             res = self.proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
 
     async def async_codeinterpreter(self, user_input: str, file: str, hook: AIBeingHookAsync):
-        sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.image_path))
+        sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.working_path))
         user = self.user_message(codecot.codeinterpreter_user.format(user_input=user_input, upload_file=file))
         self.chat_list[0] = sys
         self.chat_list.append(user)
