@@ -28,6 +28,8 @@ Already installed packages are: (numpy pandas matplotlib seaborn scikit-learn yf
 If you encounter an error, try again and fix the code.
 
 Your working directory is: `{file_path}`.
+Your working environment is CentOS.
+Your Python version is 3.11.0.
 """
 
 codeinterpreter_user = """{user_input}
