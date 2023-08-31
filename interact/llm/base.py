@@ -310,7 +310,7 @@ class AIBeingBaseTask(object):
                     res, buffer = "", b""
                     async for chunk in response.content.iter_any():
                         if b'"error":' in chunk:
-                            raise AIBeingException("streaming error from msai")
+                            raise AIBeingException("streaming error from msai" + str(chunk))
 
                         buffer += chunk
                         while b"\n\n" in buffer:

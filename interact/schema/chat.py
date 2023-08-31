@@ -7,7 +7,7 @@ from interact.schema.protocal import protocol
 class response:
     def __init__(self, protocol:str=None,  debug =None, style=None, audio_url=None, template_id=None, chat_id=None):
         self.pt = protocol
-        self.txt = debug
+        self.content = debug
         self.style = style
         self.audio_url = audio_url
         self.template_id = template_id
@@ -16,7 +16,7 @@ class response:
         return self.toStr()
 
     def toStr(self) -> str:
-        res = { "pt": self.pt, "txt": self.txt}
+        res = { "pt": self.pt, "content": self.content}
         if self.style != None:
             res["style"] = self.style
         if self.audio_url != None:
