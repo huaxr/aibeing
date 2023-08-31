@@ -210,6 +210,7 @@ class AIBeingBaseTask(object):
                 logger.error(f"arguments is not dict: {arguments}")
                 code = arguments
 
+            logger.info("生成代码:{}".format(code))
             callable = available_functions[function_name+"_async"]
             exec_result = await callable(code)
             if exec_result.type == "image/png":
