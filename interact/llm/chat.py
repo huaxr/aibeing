@@ -80,11 +80,14 @@ class AIBeingChatTask(AIBeingBaseTask):
                 self.chat_list.append(ai)
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
+            txt = "{}\n{}".format(content, result) if content else result
             if typ == "text":
-                hook.send_raw(response(protocol=protocol.thinking_now, debug="{}\n{}".format(content, result)))
+                hook.send_raw(response(protocol=protocol.thinking_now, debug=txt))
             if typ == "error":
-                self.chat_list = self.chat_list[:0]
-                return response(protocol=protocol.thinking_error, debug="{}\n{}".format(content, result) + "由于出现错误,当前消息上下文以全部清空,错误自修复暂未开发").toStr()
+                function_call = res.pop("function_call")
+                name = function_call["name"]
+                self.chat_list.append(self.func_message(result, name))
+                return response(protocol=protocol.thinking_error, debug=txt).toStr()
             if typ == "image/png":
                 hook.send_raw(response(protocol=protocol.thinking_image, file_name=result))
 
@@ -112,13 +115,16 @@ class AIBeingChatTask(AIBeingBaseTask):
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
             logger.info("生成内容:{}".format(content))
+            txt = "{}\n{}".format(content, result) if content else result
             if typ == "text":
                 logger.info("text 发送给客户端")
-                await hook.send_raw(response(protocol=protocol.thinking_now, debug="{}\n{}".format(content, result)))
+                await hook.send_raw(response(protocol=protocol.thinking_now, debug=txt))
             if typ == "error":
                 logger.info("error 发送给客户端, 结束cot")
-                self.chat_list = self.chat_list[:0]
-                return response(protocol=protocol.thinking_error, debug="{}\n{}".format(content, result)).toStr()
+                function_call = res.pop("function_call")
+                name = function_call["name"]
+                self.chat_list.append(self.func_message(result, name))
+                return response(protocol=protocol.thinking_error, debug=txt).toStr()
             if typ == "image/png":
                 logger.info("image 发送给客户端, {}".format(result))
                 await hook.send_raw(response(protocol=protocol.thinking_image, file_name=result))

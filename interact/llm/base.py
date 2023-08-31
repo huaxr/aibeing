@@ -294,7 +294,7 @@ class AIBeingBaseTask(object):
         temperature = float(temperature)
         assert len(messages) > 0, "messages length must > 0"
         if functions:
-            temperature = 0.1
+            temperature = 0.03
 
         headers, data, streaming, llm_addr = self.prepare_proxy_header_data(messages, streaming, temperature, functions, model_name=model_name)
         async with aiohttp.ClientSession() as session:
