@@ -112,6 +112,7 @@ class AIBeingChatTask(AIBeingBaseTask):
                 logger.info("stop 发送给客户端, 结束cot")
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
+            logger.info("生成内容:{}".format(content))
             if typ == "text":
                 logger.info("text 发送给客户端")
                 await hook.send_raw(response(protocol=protocol.thinking_now, debug="{}\n{}".format(content, result)))

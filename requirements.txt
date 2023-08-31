@@ -10,8 +10,6 @@ redis
 chromadb-client==0.4.6.dev0
 aiohttp
 FlagEmbedding==1.0.3
-openapi-schema-pydantic==1.2.4
 pydantic==1.10.12
 jupyter-kernel-gateway
 Pillow
-dotenv
