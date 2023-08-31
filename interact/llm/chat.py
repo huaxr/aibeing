@@ -82,10 +82,10 @@ class AIBeingChatTask(AIBeingBaseTask):
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
             if typ == "text":
-                hook.send_raw(response(protocol=protocol.thinking_now, debug=content + "\n" + result))
+                hook.send_raw(response(protocol=protocol.thinking_now, debug="{}\n{}".format(content, result)))
             if typ == "error":
                 self.chat_list = self.chat_list[:0]
-                return response(protocol=protocol.thinking_error, debug=content + "\n" + result + "\n" + "由于出现错误,当前消息上下文以全部清空,错误自修复暂未开发").toStr()
+                return response(protocol=protocol.thinking_error, debug="{}\n{}".format(content, result) + "由于出现错误,当前消息上下文以全部清空,错误自修复暂未开发").toStr()
             if typ == "image/png":
                 hook.send_raw(response(protocol=protocol.thinking_image, debug=result))
 
@@ -138,14 +138,15 @@ class AIBeingChatTask(AIBeingBaseTask):
         inputs = input_js.get("content")
 
         if pt == protocol.chat_thinking:
-            file = input_js.get["file"]
+            file = input_js.get("file", None)
+            assert file is not None, "file should not be None "
             return self.codeinterpreter(inputs, file, hook)
 
         if pt == protocol.gen_story:
-            theme = input_js.get["theme"]
-            prompts = input_js.get["prompts"]
-            temperature = input_js.get["temperature"]
-            model_name = input_js.get["model_name"]
+            theme = input_js.get("theme")
+            prompts = input_js.get("prompts")
+            temperature = input_js.get("temperature")
+            model_name = input_js.get("model_name")
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return self.gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
@@ -181,23 +182,25 @@ class AIBeingChatTask(AIBeingBaseTask):
         inputs = input_js.get("content")
 
         if pt == protocol.chat_thinking:
-            file = input_js.get["file"]
+            file = input_js.get("file")
             logger.info("chat thinking: {}".format(input_js))
             return await self.async_codeinterpreter(inputs, file, hook)
 
         if pt == protocol.gen_story:
-            theme = input_js.get["theme"]
-            prompts = input_js.get["prompts"]
-            temperature = input_js.get["temperature"]
-            model_name = input_js.get["model_name"]
+            theme = input_js.get("theme")
+            prompts = input_js.get("prompts")
+            temperature = input_js.get("temperature")
+            model_name = input_js.get("model_name")
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return await self.async_gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
 
         # pure chat
         if pt == protocol.chat_pure:
+            temperature = input_js.get("temperature")
+            model_name = input_js.get("model_name")
             self.chat_list.append(self.user_message(inputs))
-            res = await self.async_proxy(self.chat_list, hook, 0.9, streaming=True)
+            res = await self.async_proxy(self.chat_list, hook, temperature, streaming=True, model_name=model_name)
             self.chat_list.append(self.ai_message(res))
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
             return response(protocol=protocol.chat_response, debug=res).toStr()
