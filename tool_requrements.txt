@@ -11,4 +11,8 @@ bokeh
 plotly
 dash
 networkx
+
+# OCR
+# yum install epel-release
+# yum install tesseract
 tesseract
