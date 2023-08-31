@@ -19,7 +19,6 @@ from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
 from interact.llm.base import AIBeingBaseTask
 from interact.llm.hook import AIBeingHookAsync, AIBeingHook
-from interact.llm.template.story import storyfactory_system
 from interact.schema.chat import response
 from interact.schema.protocal import protocol
 from interact.llm.template import chat, analyze, codecot
@@ -138,8 +137,11 @@ class AIBeingChatTask(AIBeingBaseTask):
         if pt == protocol.gen_story:
             theme = input_js.get("theme")
             prompts = input_js.get("prompts")
+            assert isinstance(prompts, list), "prompts must be list"
             temperature = input_js.get("temperature")
+            assert temperature is not None, "temperature should not be None"
             model_name = input_js.get("model_name")
+            assert model_name is not None, "model_name should not be None"
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return self.gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
