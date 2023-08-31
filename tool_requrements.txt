@@ -1,4 +1,3 @@
-openpyxl
 numpy
 pandas
 matplotlib
@@ -12,4 +11,3 @@ bokeh
 plotly
 dash
 networkx
-seaborn

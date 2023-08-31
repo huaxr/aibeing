@@ -186,9 +186,11 @@ class AIBeingChatTask(AIBeingBaseTask):
             return await self.async_codeinterpreter(content, file, hook)
         # pure chat
         if pt == protocol.chat_pure:
+            logger.info("chat_pure enter")
             self.chat_list.append(self.user_message(inputs))
             res = await self.async_proxy(self.chat_list, hook, 0.9, streaming=True)
             self.chat_list.append(self.ai_message(res))
+            logger.info("chat_pure exit")
             create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
             return response(protocol=protocol.chat_response, debug=res).toStr()
 
