@@ -132,20 +132,20 @@ class AIBeingChatTask(AIBeingBaseTask):
             res = await self.async_proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
 
     @check_running
-    def generate(self, inputs, **kwargs) -> Any:
+    def generate(self, input_js, **kwargs) -> Any:
         hook = kwargs["hook"]
-        pt = kwargs["pt"]
+        pt = input_js.get("pt")
+        inputs = input_js.get("content")
 
         if pt == protocol.chat_thinking:
-            content = inputs["content"]
-            file = inputs["file"]
-            return self.codeinterpreter(content, file, hook)
+            file = input_js.get["file"]
+            return self.codeinterpreter(inputs, file, hook)
 
         if pt == protocol.gen_story:
-            theme = inputs["theme"]
-            prompts = inputs["prompts"]
-            temperature = inputs["temperature"]
-            model_name = inputs["model_name"]
+            theme = input_js.get["theme"]
+            prompts = input_js.get["prompts"]
+            temperature = input_js.get["temperature"]
+            model_name = input_js.get["model_name"]
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return self.gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
@@ -175,33 +175,32 @@ class AIBeingChatTask(AIBeingBaseTask):
         return response(protocol=protocol.chat_response, debug=reply, style=emotion, audio_url=os.path.basename(filename), template_id=self.template_id, chat_id=id).toStr()
 
     @check_running
-    async def async_generate(self, inputs, **kwargs) -> Any:
+    async def async_generate(self, input_js, **kwargs) -> Any:
         hook = kwargs["hook"]
-        pt = kwargs["pt"]
+        pt = input_js.get("pt")
+        inputs = input_js.get("content")
 
         if pt == protocol.chat_thinking:
-            content = inputs["content"]
-            file = inputs["file"]
-            logger.info("chat thinking: {}".format(inputs))
-            return await self.async_codeinterpreter(content, file, hook)
-        # pure chat
-        if pt == protocol.chat_pure:
-            logger.info("chat_pure enter")
-            self.chat_list.append(self.user_message(inputs))
-            res = await self.async_proxy(self.chat_list, hook, 0.9, streaming=True)
-            self.chat_list.append(self.ai_message(res))
-            logger.info("chat_pure exit")
-            create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
-            return response(protocol=protocol.chat_response, debug=res).toStr()
+            file = input_js.get["file"]
+            logger.info("chat thinking: {}".format(input_js))
+            return await self.async_codeinterpreter(inputs, file, hook)
 
         if pt == protocol.gen_story:
-            theme = inputs["theme"]
-            prompts = inputs["prompts"]
-            temperature = inputs["temperature"]
-            model_name = inputs["model_name"]
+            theme = input_js.get["theme"]
+            prompts = input_js.get["prompts"]
+            temperature = input_js.get["temperature"]
+            model_name = input_js.get["model_name"]
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return await self.async_gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
+
+        # pure chat
+        if pt == protocol.chat_pure:
+            self.chat_list.append(self.user_message(inputs))
+            res = await self.async_proxy(self.chat_list, hook, 0.9, streaming=True)
+            self.chat_list.append(self.ai_message(res))
+            create_chat(PureChatModel(uid=self.uid, input=inputs, output=res))
+            return response(protocol=protocol.chat_response, debug=res).toStr()
 
         if pt == protocol.get_greeting:
             return self.greeting()

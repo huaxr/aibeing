@@ -10,7 +10,7 @@ import asyncio
 
 import openai
 import websockets
-from typing import Union
+from typing import Union, Optional
 from websockets.exceptions import WebSocketException
 
 from core.log import logger
@@ -35,7 +35,7 @@ class WSServer(object):
 
     async def asyncall_websocket_handler(self, websocket, path):
         session_id = str(uuid.uuid4())
-        task: AIBeingBaseTask = None
+        task: Optional[AIBeingBaseTask, None] = None
         current_template_id = 0
         logger.info("session start %s" % session_id)
         while 1:
@@ -44,24 +44,29 @@ class WSServer(object):
                 if len(message) == 0:
                     await websocket.send(response(protocol=protocol.exception, debug="should not empty").toStr())
                     continue
-                data, template_id, pt, session = await self.handler.async_on_message(message)
+                js, returnDirectly  = await self.handler.async_on_message(message)
+                if returnDirectly:
+                    data = js.get("content")
+                    assert isinstance(data, response), "returnDirectly must be response"
+                    await websocket.send(data.toStr())
+                    continue
+
+                session = js.get("session_id", None)
                 if session:
                     session_id = session
-                if not pt:
-                    data = data.toStr() if isinstance(data, response) else str(data)
-                    await websocket.send(data)
-                    continue
-                if len(data) == 0:
+
+                if not js.get("content"):
                     await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
                     continue
-                # when pure chat, template_id is -1
+
+                template_id = js.get("template_id", -1)
                 if task is None or template_id != current_template_id:
                     current_template_id = template_id
                     if not sessions.get(session_id):
                         sessions.put(session_id, AIBeingChatTask(session_id, template_id, self.audiotrans))
 
                 assert sessions.get(session_id) is not None, AIBeingException("session_id not in sessions")
-                aiSay = await sessions.get(session_id).async_generate(data, hook=AIBeingHookAsync(websocket, template_id), pt=pt)
+                aiSay = await sessions.get(session_id).async_generate(js, hook=AIBeingHookAsync(websocket, template_id))
                 await websocket.send(aiSay)
 
             except Exception as e:
@@ -96,7 +101,7 @@ class WSServer(object):
         token_queue = queue.Queue()
         streaming_token_thread = threading.Thread(target=self.streaming_token, args=(token_queue, websocket))
         streaming_token_thread.start()
-        task: Union[AIBeingBaseTask, None] = None
+        task: Optional[AIBeingBaseTask, None] = None
         current_template_id = 0
         logger.info("session start %s" % session_id)
 
@@ -106,23 +111,30 @@ class WSServer(object):
                 if len(message) == 0:
                     await websocket.send(response(protocol=protocol.exception, debug="should not empty").toStr())
                     continue
-                data, template_id, pt, session = self.handler.on_message(message)
+                js, returnDirectly = self.handler.on_message(message)
+
+                if returnDirectly:
+                    data = js.get("content")
+                    assert isinstance(data, response), "returnDirectly must be response"
+                    await websocket.send(data.toStr())
+                    continue
+
+                session = js.get("session_id", None)
                 if session:
                     session_id = session
 
-                if not pt:
-                    data = data.toStr() if isinstance(data, response) else str(data)
-                    await websocket.send(data)
-                    continue
-                if len(data) == 0:
+                if not js.get("content"):
                     await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
                     continue
+
+                template_id = js.get("template_id", -1)
+
                 if task is None or template_id != current_template_id:
                     current_template_id = template_id
                     if not sessions.get(session_id):
                         sessions.put(session_id, AIBeingChatTask(session_id, template_id, self.audiotrans))
                 assert sessions.get(session_id) is not None, AIBeingException("session_id not in sessions")
-                aiSay = sessions.get(session_id).generate(data, hook=AIBeingHook(token_queue, template_id), pt=pt)
+                aiSay = sessions.get(session_id).generate(js, hook=AIBeingHook(token_queue, template_id))
                 await websocket.send(aiSay)
             except Exception as e:
                 if isinstance(e, WebSocketException):

@@ -2,7 +2,7 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import json
-from typing import Any
+from typing import Any, Optional, Dict
 
 from core.conf import config
 from core.db import TemplateModel, create_template, get_template_list, get_template_by_id, update_template, update_chat_like, update_chat_unlike
@@ -78,45 +78,38 @@ class BaseHandler(object):
                               few_shot_content=few_shot_content,
                               prompt=prompt, character_prompt=character_prompt)
 
-    def process(self, js:{}) -> (Any, int, str, str):
+    def process(self, js:{}) -> (Dict, bool):
         pt = js["pt"]
 
-        if pt == protocol.chat_thinking:
-            body = js["txt"]
-            if isinstance(body, str):
-                body = json.loads(body)
-            return body, int(js["template_id"]), pt, ""
+        if pt in  [protocol.chat_thinking, protocol.gen_story]:
+            return js, False
 
-        if pt == protocol.gen_story:
-            body = js["txt"]
-            if isinstance(body, str):
-                body = json.loads(body)
-            return body, int(js["template_id"]), pt, ""
-
-        if pt == protocol.get_greeting:
-            return "", int(js["template_id"]), pt, ""
+        if pt == protocol.chat_text:
+            id = js.get("template_id", None)
+            if id :
+                if int(id) <= 0:
+                    js["pt"] = protocol.chat_pure
+            return js, False
 
         if pt == "login":
-            session_id = js["txt"]
-            return response(protocol=protocol.login, debug="ok"), -1, "", session_id
+            js["content"] = response(protocol=protocol.login, debug="ok")
+            return js, True
 
         if pt == "ping":
-            return response(protocol=protocol.pong, debug="ok"), -1, "", ""
+            js["content"] = response(protocol=protocol.pong, debug="ok")
+            return js, True
 
         if pt == "like":
             chat_id = js["txt"]
             update_chat_like(int(chat_id))
-            return response(protocol=protocol.like, debug="ok"), -1, "", ""
+            js["content"] = response(protocol=protocol.like, debug="ok")
+            return js, True
 
         if pt == "unlike":
             chat_id = js["txt"]
             update_chat_unlike(int(chat_id))
-            return response(protocol=protocol.unlike, debug="ok"), -1, "", ""
-
-        if pt == "chat_req":
-            if int(js["template_id"]) <= 0:
-                return js["txt"], int(js["template_id"]), protocol.chat_pure, ""
-            return js["txt"], int(js["template_id"]), pt, ""
+            js["content"] = response(protocol=protocol.unlike, debug="ok")
+            return js, True
 
         if pt == "create_template":
             data = js["txt"]
@@ -128,19 +121,23 @@ class BaseHandler(object):
             except Exception as e:
                 res = str(e)
 
-            return response(protocol=protocol.create_template_rsp, debug=res), -1, "", ""
+            js["content"] = response(protocol=protocol.create_template_rsp, debug=res)
+            return js, True
 
         if pt == "get_template_list":
             res = get_template_list()
             list = []
             for i in res:
                 list.append(i.model_to_dict())
-            return response(protocol=protocol.get_template_list_rsp, debug=list), -1, "", ""
+
+            js["content"] = response(protocol=protocol.get_template_list_rsp, debug=list)
+            return js, True
 
         if pt == "get_template_by_id":
             id = js["txt"]
             res = get_template_by_id(id)
-            return response(protocol=protocol.get_template_by_id_rsp, debug=res.model_to_dict()), -1, "", ""
+            js["content"] = response(protocol=protocol.get_template_by_id_rsp, debug=res.model_to_dict())
+            return js, True
 
         if pt == "update_template":
             id = int(js["template_id"])
@@ -152,7 +149,9 @@ class BaseHandler(object):
                 res = update_template(id, model)
             except Exception as e:
                 res = "update_template error:" + str(e)
-            return response(protocol=protocol.update_template_rsp, debug=res), -1, "", ""
+
+            js["content"] = response(protocol=protocol.update_template_rsp, debug=res)
+            return js, True
 
         if pt == "flush_cache":
             id = int(js["template_id"])
@@ -160,6 +159,7 @@ class BaseHandler(object):
             t = Template.model2template(i)
             task = AIBeingGreetingTask(AudioTransform(config.audio_save_path), t, 3600)
             task.generate()
-            return response(protocol=protocol.flush_cache_rsp, debug=""), -1, "", ""
+            js["content"] = response(protocol=protocol.flush_cache_rsp, debug="")
+            return js, True
 
         raise RuntimeError("unknown pt: {}".format(pt))

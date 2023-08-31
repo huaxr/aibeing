@@ -5,7 +5,7 @@
 class protocol:
     chat_response = "chat_rsp"
     pong = "pong"
-    login = "login"
+
 
     stream_start = "stream_start"
     stream_action = "stream_action"
@@ -22,9 +22,8 @@ class protocol:
 
     like = "like"
     unlike = "unlike"
+    login = "login"
 
-    get_continue_chat = "get_continue_chat"
-    pure_chat = "pure_chat"
 
     thinking_now = "thinking_now"
     thinking_error = "thinking_error"
@@ -35,8 +34,10 @@ class protocol:
     gen_story_action = "chat_rsp"
     gen_story_end = "gen_story_end"
 
-    chat_thinking = "chat_thinking"
-    chat_pure = "chat_pure"
     gen_story = "gen_story"
+    chat_thinking = "chat_thinking"
+    chat_text, chat_pure = "chat_req", "chat_req"
+    chat_audio = "chat_audio"
     get_greeting = "get_greeting"
+
 
