@@ -105,6 +105,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         res = await self.async_proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
         while 1:
             typ = res.pop("exec_type")
+            logger.info("执行结果类型:{}".format(typ))
             result = res.pop("exec_result")
             if typ == "stop":
                 ai = self.ai_message(result)
