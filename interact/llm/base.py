@@ -150,7 +150,6 @@ class AIBeingBaseTask(object):
     def agent(self, response_message:dict) -> dict:
         reason = response_message["choices"][0]["finish_reason"]
         call_res = response_message["choices"][0]["message"]
-        logger.info("finish_reason:{} \n call_res:{}".format(reason, call_res))
 
         if reason == "function_call":
             # get exec result
@@ -166,7 +165,6 @@ class AIBeingBaseTask(object):
 
             callable = available_functions[function_name]
             exec_result = callable(code)
-            logger.info("exec_result type:{}".format(exec_result.type))
 
             if exec_result.type == "image/png":
                 image_bytes = base64.b64decode(exec_result.content)
@@ -198,9 +196,9 @@ class AIBeingBaseTask(object):
     async def async_agent(self, response_message:dict) -> dict:
         reason = response_message["choices"][0]["finish_reason"]
         call_res = response_message["choices"][0]["message"]
-        logger.info("finish_reason:{} \n call_res:{}".format(reason, call_res))
 
         if reason == "function_call":
+            logger.info("开始执行函数")
             # get exec result
             function_call_dict = call_res["function_call"]
             function_name = function_call_dict["name"]
@@ -214,8 +212,8 @@ class AIBeingBaseTask(object):
 
             callable = available_functions[function_name+"_async"]
             exec_result = await callable(code)
-            logger.info("exec_result type:{}".format(exec_result.type))
             if exec_result.type == "image/png":
+                logger.info("生成图片")
                 image_bytes = base64.b64decode(exec_result.content)
                 image = Image.open(BytesIO(image_bytes))
                 file = "{}output_image.{}.png".format(config.image_path, time.time())
@@ -223,9 +221,11 @@ class AIBeingBaseTask(object):
                 call_res["exec_result"] = file
 
             elif exec_result.type == "text":
+                logger.info("生成文本")
                 call_res["exec_result"] = exec_result.content
 
             elif exec_result.type == "error":
+                logger.info("生成错误")
                 call_res["exec_result"] = exec_result.content
 
             else:
@@ -233,6 +233,7 @@ class AIBeingBaseTask(object):
             call_res["exec_type"] = exec_result.type
             return call_res
         elif reason == "stop":  # cot end
+            logger.info("退出, 并未执行函数")
             return {"exec_type": "stop", "exec_result": call_res["content"]}
 
         else:
