@@ -55,10 +55,6 @@ class WSServer(object):
                 if session:
                     session_id = session
 
-                if not js.get("content"):
-                    await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
-                    continue
-
                 template_id = js.get("template_id", -1)
                 if task is None or template_id != current_template_id:
                     current_template_id = template_id
@@ -122,10 +118,6 @@ class WSServer(object):
                 session = js.get("session_id", None)
                 if session:
                     session_id = session
-
-                if not js.get("content"):
-                    await websocket.send(response(protocol=protocol.exception, debug="data input is empty").toStr())
-                    continue
 
                 template_id = js.get("template_id", -1)
 

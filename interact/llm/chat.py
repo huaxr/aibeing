@@ -135,13 +135,6 @@ class AIBeingChatTask(AIBeingBaseTask):
     def generate(self, input_js, **kwargs) -> Any:
         hook = kwargs["hook"]
         pt = input_js.get("pt")
-        inputs = input_js.get("content")
-
-        if pt == protocol.chat_thinking:
-            file = input_js.get("file", None)
-            assert file is not None, "file should not be None "
-            return self.codeinterpreter(inputs, file, hook)
-
         if pt == protocol.gen_story:
             theme = input_js.get("theme")
             prompts = input_js.get("prompts")
@@ -150,6 +143,16 @@ class AIBeingChatTask(AIBeingBaseTask):
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return self.gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
+
+        inputs = input_js.get("content")
+
+        if not inputs:
+            return response(protocol=protocol.exception, debug="content should not be empty").toStr()
+
+        if pt == protocol.chat_thinking:
+            file = input_js.get("file", None)
+            assert file is not None, "file should not be None "
+            return self.codeinterpreter(inputs, file, hook)
 
         if pt == protocol.chat_pure:
             self.chat_list.append(self.user_message(inputs))
@@ -179,12 +182,6 @@ class AIBeingChatTask(AIBeingBaseTask):
     async def async_generate(self, input_js, **kwargs) -> Any:
         hook = kwargs["hook"]
         pt = input_js.get("pt")
-        inputs = input_js.get("content")
-
-        if pt == protocol.chat_thinking:
-            file = input_js.get("file")
-            logger.info("chat thinking: {}".format(input_js))
-            return await self.async_codeinterpreter(inputs, file, hook)
 
         if pt == protocol.gen_story:
             theme = input_js.get("theme")
@@ -194,6 +191,15 @@ class AIBeingChatTask(AIBeingBaseTask):
             logger.info("temperature:{} model_name:{}".format(temperature, model_name))
             assert isinstance(prompts, list), "prompts must be list"
             return await self.async_gen_story(prompts, hook, temperature=float(temperature), model_name=model_name)
+
+        inputs = input_js.get("content")
+        if not inputs:
+            return response(protocol=protocol.exception, debug="content should not be empty").toStr()
+
+        if pt == protocol.chat_thinking:
+            file = input_js.get("file")
+            logger.info("chat thinking: {}".format(input_js))
+            return await self.async_codeinterpreter(inputs, file, hook)
 
         # pure chat
         if pt == protocol.chat_pure:
