@@ -105,20 +105,23 @@ class AIBeingChatTask(AIBeingBaseTask):
         res = await self.async_proxy(self.chat_list, None, 0.03, streaming=False, functions=functions)
         while 1:
             typ = res.pop("exec_type")
-            logger.info("执行结果类型:{}".format(typ))
             result = res.pop("exec_result")
             if typ == "stop":
                 ai = self.ai_message(result)
                 self.chat_list.append(ai)
+                logger.info("stop 发送给客户端, 结束cot")
                 return response(protocol=protocol.thinking_stop, debug=result).toStr()
             content = res.pop("content")
             if typ == "text":
-                await hook.send_raw(response(protocol=protocol.thinking_now, debug=content + "\n" + result).toStr())
+                logger.info("text 发送给客户端")
+                await hook.send_raw(response(protocol=protocol.thinking_now, debug=content + "\n" + result))
             if typ == "error":
+                logger.info("error 发送给客户端, 结束cot")
                 self.chat_list = self.chat_list[:0]
                 return response(protocol=protocol.thinking_error, debug=content + "\n" + result).toStr()
             if typ == "image/png":
-                await hook.send_raw(response(protocol=protocol.thinking_image, debug=result).toStr())
+                logger.info("image 发送给客户端, {}".format(result))
+                await hook.send_raw(response(protocol=protocol.thinking_image, debug=result))
             function_call = res.pop("function_call")
             name = function_call["name"]
             ai = self.ai_message(content, function_call)

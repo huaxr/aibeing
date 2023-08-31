@@ -55,8 +55,8 @@ class AIBeingHookAsync(Hook):
         await self.sock.send(response(protocol=protocol.stream_start, template_id=self.template_id).toStr())
     async def stream_pure_end(self) -> None:
         await self.sock.send(response(protocol=protocol.stream_end, template_id=self.template_id).toStr())
-    async def send_raw(self, text: str) -> None:
-        await self.sock.send(response(protocol=protocol.chat_response, debug=text, template_id=self.template_id).toStr())
+    async def send_raw(self, raw: response) -> None:
+        await self.sock.send(raw.toStr())
     async def send_text(self, proto: str, text: str) -> None:
         await self.sock.send(response(protocol=proto, debug=text, template_id=self.template_id).toStr())
 
@@ -94,8 +94,8 @@ class AIBeingHook(Hook):
     def stream_pure_end(self) -> None:
         self.q.put(response(protocol=protocol.stream_end, template_id=self.template_id).toStr())
 
-    def send_raw(self, text):
-        self.q.put(response(protocol=protocol.chat_response, debug=text, template_id=self.template_id).toStr())
+    def send_raw(self, raw):
+        self.q.put(raw)
 
     def send_text(self, protocol, text):
         self.q.put(response(protocol=protocol, debug=text, template_id=self.template_id).toStr())
