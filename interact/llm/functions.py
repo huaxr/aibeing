@@ -7,6 +7,9 @@ from interact.codebox import CodeBox
 from interact.codebox.schema import CodeBoxOutput
 from interact.llm.exception import AIBeingException
 
+codebox = CodeBox()
+start = False
+
 functions = [
     {
         "name": "python",
@@ -36,8 +39,6 @@ def python_handler(code):
     except subprocess.CalledProcessError as e:
         return AIBeingException("Error running IPython code: {}".format(e))
 
-codebox = CodeBox()
-start = False
 # 不能关闭 shell， 否则交互式变量丢失
 # codebox.stop()
 def ipython_handler(code) -> CodeBoxOutput:
@@ -58,6 +59,7 @@ async def async_ipython_handler(code) -> CodeBoxOutput:
     assert codebox.status() == "running", "CodeBox is not running"
     result = await codebox.arun(code)
     return result
+
 
 available_functions = {
     "python": ipython_handler,

@@ -43,13 +43,12 @@ support_voice_emotion = ['advertisement_upbeat', 'affectionate', 'angry', 'assis
                          'newscast-formal', 'poetry-reading', 'sad', 'serious', 'shouting', 'sports_commentary',
                          'sports_commentary_excited', 'whispering', 'terrified', 'unfriendly', "default"]
 
-class AudioTransform(object):
-    def __init__(self, save_path: str):
+class TTSMS(object):
+    def __init__(self):
         # self.subscription_key = '9bb20e5cc41f461fb14d8cf90abe5f0b'
         # self.region = 'eastasia'
         self.subscription_key = '4d8a5649051644cca86c5bfea4370286'
         self.region = 'eastasia'
-        self.save_path = save_path
 
     def get_token(self, subscription_key):
         fetch_token_url = f'https://{self.region}.api.cognitive.microsoft.com/sts/v1.0/issueToken'
@@ -166,13 +165,14 @@ class AudioTransform(object):
                 async with session.post(url, headers=headers, data=payload) as response:
                     jobj = json.loads(await response.text())
                     return jobj["DisplayText"]
+
 async def main():
     # Define the required parameters
     voice_name = 'zh-CN-XiaoxiaoNeural'
     style = "chat"
     text = "你好,这是一段中文，我还是说中文好听吧"
     out_file = "output.mp3"
-    x = AudioTransform(save_path="/tmp")
+    x = TTSMS()
     # Call ms_tts_async with await
     success, audio_file = await x.async_text2audio(voice_name, style, text, out_file)
 

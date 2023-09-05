@@ -2,18 +2,16 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import json
-from typing import Any, Dict, Optional
+from typing import  Dict
 
 from core.conf import config
 from interact.handler.base import BaseHandler
-from interact.handler.voice.microsoft import AudioTransform
 from interact.llm.exception import AIBeingException
-from interact.schema.chat import response
 
 
 class StreamHandler(BaseHandler):
-    def __init__(self, audiotrans: AudioTransform=None):
-        super().__init__(audiotrans)
+    def __init__(self):
+        super().__init__()
 
     def on_message(self, message) -> (Dict, bool):
         try:

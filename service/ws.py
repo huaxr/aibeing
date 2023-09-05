@@ -10,15 +10,14 @@ import asyncio
 
 import openai
 import websockets
-from typing import Union, Optional
+from typing import  Optional
 from websockets.exceptions import WebSocketException
 
 from core.log import logger
 from core.conf import config
 from interact.handler import handler
-from interact.handler.voice.microsoft import AudioTransform
-from interact.llm.base import AIBeingBaseTask
-from interact.llm.chat import AIBeingChatTask
+from interact.llm.tasks.base import AIBeingBaseTask
+from interact.llm.gen import get_task
 from interact.llm.exception import AIBeingException
 from interact.llm.hook import AIBeingHook, AIBeingHookAsync
 from interact.llm.sessions import sessions
@@ -30,8 +29,7 @@ class WSServer(object):
         self.port = port
         # linux only not darwin
         self.use_async = config.llm_async
-        self.audiotrans = AudioTransform(save_path=config.audio_save_path)
-        self.handler = handler.StreamHandler(audiotrans=self.audiotrans)
+        self.handler = handler.StreamHandler()
 
     async def asyncall_websocket_handler(self, websocket, path):
         session_id = str(uuid.uuid4())
@@ -59,7 +57,7 @@ class WSServer(object):
                 if task is None or template_id != current_template_id:
                     current_template_id = template_id
                     if not sessions.get(session_id):
-                        sessions.put(session_id, AIBeingChatTask(session_id, template_id, self.audiotrans))
+                        sessions.put(session_id, get_task(js))
 
                 assert sessions.get(session_id) is not None, AIBeingException("session_id not in sessions")
                 aiSay = await sessions.get(session_id).async_generate(js, hook=AIBeingHookAsync(websocket, template_id))
@@ -124,7 +122,7 @@ class WSServer(object):
                 if task is None or template_id != current_template_id:
                     current_template_id = template_id
                     if not sessions.get(session_id):
-                        sessions.put(session_id, AIBeingChatTask(session_id, template_id, self.audiotrans))
+                        sessions.put(session_id, get_task(js))
                 assert sessions.get(session_id) is not None, AIBeingException("session_id not in sessions")
                 aiSay = sessions.get(session_id).generate(js, hook=AIBeingHook(token_queue, template_id))
                 await websocket.send(aiSay)

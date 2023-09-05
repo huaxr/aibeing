@@ -17,12 +17,12 @@ async def heartbeat(websocket):
             break
 async def send_message():
     # wss://inschool.life/websocket
-    async with websockets.connect('ws://127.0.0.1:8823', ping_interval=None) as websocket:
+    async with websockets.connect('ws://127.0.0.1:8825', ping_interval=None) as websocket:
         asyncio.create_task(heartbeat(websocket))
 
         while True:
             message = json.dumps(
-                {"pt": "chat_thinking", "content": input("请输入消息："), "file": "/tmp/iris.csv"})
+                {"pt": "chat_thinking", "content": input("请输入消息："), "file": "/tmp/test.png"})
                 # {"pt": "gen_story", "template_id": -1, "txt": {"theme": "大禹治水", "prompts":["人物开场", "场景描述", "煽情对话"], "temperature":0.5, "model_name": "gpt-4"}})
 
             await websocket.send(message)

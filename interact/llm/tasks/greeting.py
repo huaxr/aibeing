@@ -7,17 +7,20 @@ import os
 from typing import Any
 from datetime import datetime
 from core.cache import redis_cli
-from interact.handler.voice.microsoft import AudioTransform
+from interact.handler.voice.microsoft import TTSMS
 from interact.llm.exception import AIBeingException
-from interact.llm.base import AIBeingBaseTask
+from interact.llm.tasks.base import AIBeingBaseTask
 from interact.llm.template.greeting import greeting_template
 from interact.llm.template.template import Template
 
 class AIBeingGreetingTask(AIBeingBaseTask):
-    def __init__(self, text2speech: AudioTransform, template: Template, expire: int=3600):
-        super().__init__(text2speech)
+    def __init__(self, text2speech: TTSMS, template: Template, expire: int=3600):
+        self.text2speech = text2speech
+        self.rds_greeting_key = "{id}-{name}-greeting"
         self.template = template
         self.expire = expire
+        super().__init__()
+
     def get_current_time(self) -> str:
         current_datetime = datetime.now()
         year = current_datetime.strftime('%Y')
@@ -40,7 +43,7 @@ class AIBeingGreetingTask(AIBeingBaseTask):
         values = []
         emotion = "excited"
         for i in greeting_list:
-            filename = self.call_ms(i, self.template.voice, emotion)
+            filename = self.call_ms(i, self.template.voice, emotion, self.text2speech)
             file_path = os.path.basename(filename)
             values.append({"text": i, "voice": file_path, "emotion": "excited"})
         print(values)

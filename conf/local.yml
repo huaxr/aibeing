@@ -2,7 +2,7 @@ log:
   path: /tmp/aibeing.log
 
 ws:
-  port: 8823
+  port: 8825
   ping_interval: 20  # 心跳间隔
   ping_timeout: 20   # 心跳超时
 

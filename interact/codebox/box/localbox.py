@@ -64,7 +64,6 @@ class LocalBox(BaseBox):
 
     def start(self) -> CodeBoxStatus:
         self.session_id = uuid4()
-        os.makedirs(".codebox", exist_ok=True)
         self._check_port()
         if settings.VERBOSE:
             print("Starting kernel...")
@@ -85,7 +84,7 @@ class LocalBox(BaseBox):
                 ],
                 stdout=out,
                 stderr=out,
-                cwd=".codebox",
+                # cwd=".codebox",
             )
             self._jupyter_pids.append(self.jupyter.pid)
         except FileNotFoundError:
@@ -142,7 +141,7 @@ class LocalBox(BaseBox):
 
     async def astart(self) -> CodeBoxStatus:
         self.session_id = uuid4()
-        os.makedirs(".codebox", exist_ok=True)
+        # os.makedirs(".codebox", exist_ok=True)
         self.aiohttp_session = aiohttp.ClientSession()
         await self._acheck_port()
         if settings.VERBOSE:
@@ -162,7 +161,7 @@ class LocalBox(BaseBox):
                 f"--KernelGatewayApp.port={self.port}",
                 stdout=out,
                 stderr=out,
-                cwd=".codebox",
+                # cwd=".codebox",
             )
             self._jupyter_pids.append(self.jupyter.pid)
         except Exception as e:
@@ -460,7 +459,7 @@ class LocalBox(BaseBox):
                 return CodeBoxOutput(type="error", content=error)
 
     def upload(self, file_name: str, content: bytes) -> CodeBoxStatus:
-        os.makedirs(".codebox", exist_ok=True)
+        # os.makedirs(".codebox", exist_ok=True)
         with open(os.path.join(".codebox", file_name), "wb") as f:
             f.write(content)
 

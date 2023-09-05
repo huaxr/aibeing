@@ -2,20 +2,19 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 import json
-from typing import Any, Optional, Dict
+from typing import Dict
 
-from core.conf import config
 from core.db import TemplateModel, create_template, get_template_list, get_template_by_id, update_template, update_chat_like, update_chat_unlike
-from interact.handler.voice.microsoft import AudioTransform
-from interact.llm.greeting import AIBeingGreetingTask
+from interact.handler.voice.microsoft import TTSMS
+from interact.llm.tasks.greeting import AIBeingGreetingTask
 from interact.llm.template.template import Template
 from interact.schema.chat import response
 from interact.schema.protocal import protocol
 from interact.handler.voice.microsoft import support_voice_type, support_voice_emotion
 
 class BaseHandler(object):
-    def __init__(self, audiotrans: AudioTransform):
-        self.audiotrans = audiotrans
+    def __init__(self):
+        self.audiotrans = TTSMS()
 
     # bool means response directly to the client
     def on_message(self, message) -> (str, int, bool):
@@ -157,7 +156,7 @@ class BaseHandler(object):
             id = int(js["template_id"])
             i = get_template_by_id(id)
             t = Template.model2template(i)
-            task = AIBeingGreetingTask(AudioTransform(config.audio_save_path), t, 3600)
+            task = AIBeingGreetingTask(TTSMS(), t, 3600)
             task.generate()
             js["content"] = response(protocol=protocol.flush_cache_rsp, debug="")
             return js, True

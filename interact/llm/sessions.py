@@ -2,7 +2,7 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 from typing import Optional
-from interact.llm.chat import AIBeingChatTask
+from interact.llm.tasks.chat_template import AIBeingChatTask
 from collections import OrderedDict
 
 class SessionCache:

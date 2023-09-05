@@ -6,7 +6,7 @@ import json
 import os
 import time
 from io import BytesIO
-from typing import Any, Union, List, Optional
+from typing import Any, Union, List, Optional, Dict
 
 import aiohttp
 import requests
@@ -16,17 +16,16 @@ from PIL import Image
 from core.conf import config
 from core.db import get_template_by_id, TemplateModel
 from core.log import logger
-from interact.handler.voice.microsoft import AudioTransform
+from interact.handler.voice.microsoft import TTSMS
 from interact.llm.exception import AIBeingException
 from interact.llm.hook import Hook
 from interact.llm.template.template import Template, Vector, Voice, FewShot
 from interact.llm.functions import available_functions
 
 class AIBeingBaseTask(object):
-    def __init__(self, text2speech: Optional[AudioTransform] = None):
-        self.text2speech = text2speech
-        self.rds_greeting_key = "{id}-{name}-greeting"
+    def __init__(self):
         self.encoding = tiktoken.encoding_for_model("gpt-4")
+        self.chat_list: List[Dict] = [self.system_message("You can start to chat now!")]
 
     def generate(self, *args, **kwargs) -> Any:
         raise NotImplementedError
@@ -91,13 +90,13 @@ class AIBeingBaseTask(object):
         return num_tokens
 
     def clip_tokens(self, chat_list):
-        token_count = self._tokens(chat_list)
-        if token_count > config.llm_max_token:
-            if len(chat_list) > 3:  # 5 7 9
-                chat_list = [chat_list[0]] + chat_list[-(len(chat_list) - 1):]
+        while 1:
+            token_count = self._tokens(chat_list)
+            if token_count > config.llm_max_token:
+                logger.info("token exceed:{}, remove top 2 elem".format(token_count))
+                chat_list = chat_list[2:]
             else:
-                chat_list = [chat_list[0]]
-        return chat_list
+                return chat_list
 
     def model2template(self, template_model: TemplateModel) -> Template:
         name = template_model.name
@@ -372,16 +371,18 @@ class AIBeingBaseTask(object):
         """ {'role': 'function', 'content': 'function result', 'name': 'python'}"""
         return {"role": "function", "content": content, "name":name}
 
-    def call_ms(self, text, voice: Voice, emotion: str) -> str:
+    def call_ms(self, text, voice: Voice, emotion: str, tts: TTSMS) -> str:
+        assert hasattr(self, "text2speech")
         if not voice.switch:
             return ""
-        filename = self.text2speech.save_path + ".".join(["aib", str(time.time()), "mp3"])
-        self.text2speech.text2audio(voice.style, emotion, text, filename)
+        filename = config.audio_save_path + ".".join(["aib", str(time.time()), "mp3"])
+        tts.text2audio(voice.style, emotion, text, filename)
         return filename
 
-    async def async_call_ms(self, text: str, voice: Voice, emotion: str) -> str:
+    async def async_call_ms(self, text: str, voice: Voice, emotion: str, tts: TTSMS) -> str:
         if not voice.switch:
             return ""
-        filename = self.text2speech.save_path + ".".join(["aib", str(time.time()), "mp3"])
-        await self.text2speech.async_text2audio(voice.style, emotion, text, filename)
+        filename = config.audio_save_path + ".".join(["aib", str(time.time()), "mp3"])
+        await tts.async_text2audio(voice.style, emotion, text, filename)
         return filename
+
