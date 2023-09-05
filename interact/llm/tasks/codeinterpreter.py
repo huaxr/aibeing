@@ -15,7 +15,7 @@ from interact.schema.protocal import protocol
 
 class AIBeingCotTask(AIBeingBaseTask):
     def  __init__(self):
-        super().__init__(protocol.chat_thinking)
+        super().__init__()
 
     async def async_codeinterpreter(self, user_input: str, file: str, hook: AIBeingHookAsync):
         sys = self.system_message(codecot.codeinterpreter_system.format(file_path=config.working_path))

@@ -36,7 +36,6 @@ def regen_task(task:AIBeingBaseTask, js: Dict) -> AIBeingBaseTask:
     else:
         raise AIBeingException("unknown protocol:{}".format(pt))
 
-    if task.protocol != pt:
-        logger.info("regen task context from {} to {}".format(task.protocol, pt))
-        t.chat_list = context
+    t.chat_list = context
+    logger.info("regen task with context: {}".format(context))
     return t

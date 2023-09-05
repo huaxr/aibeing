@@ -47,14 +47,12 @@ class WSServer(object):
                     continue
 
                 session = js.get("session_id", session_id)
-                logger.info("session_id: {}".format(session))
                 task = sessions.get(session)
                 if not task:
-                    task = AIBeingBaseTask(protocol="unknown")
+                    task = AIBeingBaseTask()
                     sessions.put(session, task)
                     logger.info("create new session: {}".format(session))
 
-                logger.info("old session: {}".format(session))
                 task = regen_task(task, js)
                 template_id = js.get("template_id", -1)
                 aiSay = await task.async_generate(js, hook=AIBeingHookAsync(websocket, template_id))
@@ -111,7 +109,7 @@ class WSServer(object):
                 session = js.get("session_id", session_id)
                 task = sessions.get(session)
                 if not task:
-                    task = AIBeingBaseTask(protocol="unknown")
+                    task = AIBeingBaseTask()
                     sessions.put(session, task)
 
                 task = regen_task(task, js)

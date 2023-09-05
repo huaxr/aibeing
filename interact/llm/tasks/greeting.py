@@ -20,7 +20,7 @@ class AIBeingGreetingTask(AIBeingBaseTask):
         self.rds_greeting_key = "{id}-{name}-greeting"
         self.template = template
         self.expire = expire
-        super().__init__(protocol.chat_template)
+        super().__init__()
 
     def get_current_time(self) -> str:
         current_datetime = datetime.now()
