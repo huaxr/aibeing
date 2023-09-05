@@ -14,10 +14,10 @@ from interact.schema.protocal import protocol
 
 def get_task(js: Dict) -> AIBeingBaseTask:
     pt = js["pt"]
-    if pt == protocol.chat_text or pt == protocol.get_greeting:
+    if pt == protocol.chat_template or pt == protocol.get_greeting:
         session_id = js.get("session_id", None)
         template_id = js.get("template_id", -1)
-        assert template_id > 0, "template_id must > 0 when chat_text"
+        assert template_id > 0, "template_id must > 0 when chat_req or get_greeting"
         return AIBeingChatTask(session_id, template_id, TTSMS())
 
     if pt == protocol.gen_story:

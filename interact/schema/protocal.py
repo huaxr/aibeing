@@ -36,7 +36,7 @@ class protocol:
 
     gen_story = "gen_story"
     chat_thinking = "chat_thinking"
-    chat_text, chat_pure = "chat_req", "chat_req"
+    chat_template, chat_pure = "chat_req", "chat_pure"
     chat_audio = "chat_audio"
     get_greeting = "get_greeting"
 

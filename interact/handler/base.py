@@ -83,7 +83,7 @@ class BaseHandler(object):
         if pt in  [protocol.chat_thinking, protocol.gen_story]:
             return js, False
 
-        if pt == protocol.chat_text:
+        if pt == protocol.chat_template:
             id = js.get("template_id", None)
             if id :
                 if int(id) <= 0:
