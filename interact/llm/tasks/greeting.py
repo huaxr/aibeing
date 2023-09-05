@@ -12,6 +12,7 @@ from interact.llm.exception import AIBeingException
 from interact.llm.tasks.base import AIBeingBaseTask
 from interact.llm.template.greeting import greeting_template
 from interact.llm.template.template import Template
+from interact.schema.protocal import protocol
 
 class AIBeingGreetingTask(AIBeingBaseTask):
     def __init__(self, text2speech: TTSMS, template: Template, expire: int=3600):
@@ -19,7 +20,7 @@ class AIBeingGreetingTask(AIBeingBaseTask):
         self.rds_greeting_key = "{id}-{name}-greeting"
         self.template = template
         self.expire = expire
-        super().__init__()
+        super().__init__(protocol.chat_template)
 
     def get_current_time(self) -> str:
         current_datetime = datetime.now()

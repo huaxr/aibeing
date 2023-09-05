@@ -36,7 +36,7 @@ class AIBeingChatTask(AIBeingBaseTask):
         self._analyze_future_result = None
         self._wait_analyze_times = 0
         self.rds_greeting_key = "{id}-{name}-greeting"
-        super().__init__()
+        super().__init__(protocol.chat_template)
 
     @check_running
     def generate(self, input_js, **kwargs) -> Any:

@@ -17,7 +17,7 @@ from core.log import logger
 from core.conf import config
 from interact.handler import handler
 from interact.llm.tasks.base import AIBeingBaseTask
-from interact.llm.gen import get_task
+from interact.llm.gen import regen_task
 from interact.llm.exception import AIBeingException
 from interact.llm.hook import AIBeingHook, AIBeingHookAsync
 from interact.llm.sessions import sessions
@@ -33,9 +33,6 @@ class WSServer(object):
 
     async def asyncall_websocket_handler(self, websocket, path):
         session_id = str(uuid.uuid4())
-        task: Optional[AIBeingBaseTask, None] = None
-        current_template_id = 0
-        logger.info("session start %s" % session_id)
         while 1:
             try:
                 message = await websocket.recv()
@@ -49,18 +46,15 @@ class WSServer(object):
                     await websocket.send(data.toStr())
                     continue
 
-                session = js.get("session_id", None)
-                if session:
-                    session_id = session
+                session = js.get("session_id", session_id)
+                task = sessions.get(session)
+                if not task:
+                    task = AIBeingBaseTask(protocol="unknown")
+                    sessions.put(session, task)
 
+                task = regen_task(task, js)
                 template_id = js.get("template_id", -1)
-                if task is None or template_id != current_template_id:
-                    current_template_id = template_id
-                    if not sessions.get(session_id):
-                        sessions.put(session_id, get_task(js))
-
-                assert sessions.get(session_id) is not None, AIBeingException("session_id not in sessions")
-                aiSay = await sessions.get(session_id).async_generate(js, hook=AIBeingHookAsync(websocket, template_id))
+                aiSay = await task.async_generate(js, hook=AIBeingHookAsync(websocket, template_id))
                 await websocket.send(aiSay)
 
             except Exception as e:
@@ -95,9 +89,6 @@ class WSServer(object):
         token_queue = queue.Queue()
         streaming_token_thread = threading.Thread(target=self.streaming_token, args=(token_queue, websocket))
         streaming_token_thread.start()
-        task: Optional[AIBeingBaseTask, None] = None
-        current_template_id = 0
-        logger.info("session start %s" % session_id)
 
         while 1:
             try:
@@ -112,19 +103,16 @@ class WSServer(object):
                     assert isinstance(data, response), "returnDirectly must be response"
                     await websocket.send(data.toStr())
                     continue
-
-                session = js.get("session_id", None)
-                if session:
-                    session_id = session
-
                 template_id = js.get("template_id", -1)
 
-                if task is None or template_id != current_template_id:
-                    current_template_id = template_id
-                    if not sessions.get(session_id):
-                        sessions.put(session_id, get_task(js))
-                assert sessions.get(session_id) is not None, AIBeingException("session_id not in sessions")
-                aiSay = sessions.get(session_id).generate(js, hook=AIBeingHook(token_queue, template_id))
+                session = js.get("session_id", session_id)
+                task = sessions.get(session)
+                if not task:
+                    task = AIBeingBaseTask(protocol="unknown")
+                    sessions.put(session, task)
+
+                task = regen_task(task, js)
+                aiSay = task.generate(js, hook=AIBeingHook(token_queue, template_id))
                 await websocket.send(aiSay)
             except Exception as e:
                 if isinstance(e, WebSocketException):

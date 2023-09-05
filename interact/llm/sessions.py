@@ -2,7 +2,8 @@
 # @Team: AIBeing
 # @Author: huaxinrui@tal.com
 from typing import Optional
-from interact.llm.tasks.chat_template import AIBeingChatTask
+
+from interact.llm.tasks.base import AIBeingBaseTask
 from collections import OrderedDict
 
 class SessionCache:
@@ -10,14 +11,14 @@ class SessionCache:
     def __init__(self, maxsize):
         self.maxsize = maxsize
         self.cache = OrderedDict()
-    def get(self, key:str) -> Optional[AIBeingChatTask]:
+    def get(self, key:str) -> Optional[AIBeingBaseTask]:
         if key in self.cache:
             value = self.cache.pop(key)
             self.cache[key] = value
             return value
         return None
 
-    def put(self, key:str, value:AIBeingChatTask):
+    def put(self, key:str, value:AIBeingBaseTask):
         if len(self.cache) >= self.maxsize:
             self.cache.popitem(last=False)
         self.cache[key] = value

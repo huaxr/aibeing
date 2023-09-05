@@ -60,7 +60,7 @@ class AIBeingHookAsync(Hook):
 
 class AIBeingHook(Hook):
     """Callback Handler that prints to std out."""
-    def __init__(self, queue, template_id):
+    def __init__(self, queue, template_id=-1):
         """Initialize callback handler."""
         self.q = queue
         self.template_id = template_id
