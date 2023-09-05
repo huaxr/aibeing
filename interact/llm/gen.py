@@ -35,7 +35,7 @@ def regen_task(task:AIBeingBaseTask, js: Dict, merge= True) -> AIBeingBaseTask:
     else:
         raise AIBeingException("unknown protocol:{}".format(pt))
     if merge:
-        logger.info("merge task from {} to {}".format(task.protocol, pt))
+        logger.info("merge task from {} to {} with contexts size:{}".format(task.protocol, pt, len(task.chat_list)))
         context = task.chat_list
         t.chat_list = context
     return t
