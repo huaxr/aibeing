@@ -13,13 +13,13 @@ from interact.llm.tasks.chat_pure import AIBeingPureTask
 from interact.llm.tasks.gen_story import AIBeingStoryTask
 from interact.schema.protocal import protocol
 
-def regen_task(task:AIBeingBaseTask, js: Dict) -> AIBeingBaseTask:
-    context = task.chat_list
+def regen_task(task:AIBeingBaseTask, js: Dict, merge= True) -> AIBeingBaseTask:
     pt = js["pt"]
+    if task.protocol == pt:
+        return task
     if pt == protocol.chat_template or pt == protocol.get_greeting:
         session_id = js.get("session_id", None)
         template_id = js.get("template_id", -1)
-        assert template_id > 0, "template_id must > 0 when chat_req or get_greeting"
         t =  AIBeingChatTask(session_id, template_id, TTSMS())
 
     elif pt == protocol.gen_story:
@@ -32,10 +32,10 @@ def regen_task(task:AIBeingBaseTask, js: Dict) -> AIBeingBaseTask:
 
     elif pt == protocol.chat_thinking:
         t = AIBeingCotTask()
-
     else:
         raise AIBeingException("unknown protocol:{}".format(pt))
-
-    t.chat_list = context
-    logger.info("regen task with context: {}".format(context))
+    if merge:
+        logger.info("merge task from {} to {}".format(task.protocol, pt))
+        context = task.chat_list
+        t.chat_list = context
     return t

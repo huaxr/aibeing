@@ -49,11 +49,11 @@ class WSServer(object):
                 session = js.get("session_id", session_id)
                 task = sessions.get(session)
                 if not task:
-                    task = AIBeingBaseTask()
-                    sessions.put(session, task)
+                    task = AIBeingBaseTask("unknown")
                     logger.info("create new session: {}".format(session))
 
                 task = regen_task(task, js)
+                sessions.put(session, task)
                 template_id = js.get("template_id", -1)
                 aiSay = await task.async_generate(js, hook=AIBeingHookAsync(websocket, template_id))
                 await websocket.send(aiSay)
@@ -109,10 +109,9 @@ class WSServer(object):
                 session = js.get("session_id", session_id)
                 task = sessions.get(session)
                 if not task:
-                    task = AIBeingBaseTask()
-                    sessions.put(session, task)
-
+                    task = AIBeingBaseTask("unknown")
                 task = regen_task(task, js)
+                sessions.put(session, task)
                 aiSay = task.generate(js, hook=AIBeingHook(token_queue, template_id))
                 await websocket.send(aiSay)
             except Exception as e:

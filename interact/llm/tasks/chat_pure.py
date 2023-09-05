@@ -12,7 +12,7 @@ from interact.schema.protocal import protocol
 class AIBeingPureTask(AIBeingBaseTask):
     def  __init__(self, uid: str):
         self.uid = uid
-        super().__init__()
+        super().__init__(protocol.chat_pure)
 
     @check_running
     async def async_generate(self, input_js, **kwargs) -> Any:
