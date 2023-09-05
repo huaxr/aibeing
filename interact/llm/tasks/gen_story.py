@@ -12,8 +12,7 @@ from interact.schema.protocal import protocol
 
 
 class AIBeingStoryTask(AIBeingBaseTask):
-    def  __init__(self, uid: str):
-        self.uid = uid
+    def  __init__(self):
         super().__init__(protocol.gen_story)
 
     async def async_gen_story(self, prompt_chains: List[str], hook: AIBeingHookAsync, temperature:float=0.9, model_name:str="msai"):

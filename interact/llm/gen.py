@@ -20,11 +20,11 @@ def regen_task(task:AIBeingBaseTask, js: Dict, merge= True) -> AIBeingBaseTask:
     if pt == protocol.chat_template or pt == protocol.get_greeting:
         session_id = js.get("session_id", None)
         template_id = js.get("template_id", -1)
+        assert template_id > 0, "template_id should be greater than 0"
         t =  AIBeingChatTask(session_id, template_id, TTSMS())
 
     elif pt == protocol.gen_story:
-        session_id = js.get("session_id", None)
-        t = AIBeingStoryTask(session_id)
+        t = AIBeingStoryTask()
 
     elif pt == protocol.chat_pure:
         session_id = js.get("session_id", None)

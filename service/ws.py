@@ -10,7 +10,6 @@ import asyncio
 
 import openai
 import websockets
-from typing import  Optional
 from websockets.exceptions import WebSocketException
 
 from core.log import logger
@@ -18,7 +17,6 @@ from core.conf import config
 from interact.handler import handler
 from interact.llm.tasks.base import AIBeingBaseTask
 from interact.llm.gen import regen_task
-from interact.llm.exception import AIBeingException
 from interact.llm.hook import AIBeingHook, AIBeingHookAsync
 from interact.llm.sessions import sessions
 from interact.schema.chat import response

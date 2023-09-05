@@ -26,7 +26,6 @@ from interact.llm.vector.client import VectorDB
 
 class AIBeingChatTask(AIBeingBaseTask):
     def  __init__(self, uid: str, template_id: int, text2speech: TTSMS):
-        assert template_id > 0, "template_id should be greater than 0"
         self.template = self.load_template(template_id)
         self.template_id = template_id
         self.text2speech = text2speech
