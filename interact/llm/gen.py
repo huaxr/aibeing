@@ -21,7 +21,7 @@ def regen_task(task:AIBeingBaseTask, js: Dict, merge= True) -> AIBeingBaseTask:
         session_id = js.get("session_id", None)
         template_id = js.get("template_id", -1)
         assert template_id > 0, "template_id should be greater than 0"
-        t =  AIBeingChatTask(session_id, template_id, TTSMS())
+        t = AIBeingChatTask(session_id, template_id, TTSMS())
 
     elif pt == protocol.gen_story:
         t = AIBeingStoryTask()
@@ -34,6 +34,7 @@ def regen_task(task:AIBeingBaseTask, js: Dict, merge= True) -> AIBeingBaseTask:
         t = AIBeingCotTask()
     else:
         raise AIBeingException("unknown protocol:{}".format(pt))
+
     if merge:
         logger.info("merge task from {} to {} with contexts size:{}".format(task.protocol, pt, len(task.chat_list)))
         context = task.chat_list

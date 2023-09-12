@@ -23,7 +23,8 @@ from interact.llm.template.template import Template, Vector, Voice, FewShot
 from interact.llm.functions import available_functions
 
 class AIBeingBaseTask(object):
-    def __init__(self, protocol:str):
+
+    def __init__(self, protocol:str = "unknown"):
         self.encoding = tiktoken.encoding_for_model("gpt-4")
         self.chat_list: List[Dict] = [self.system_message("You can start to chat now!")]
         self.protocol = protocol

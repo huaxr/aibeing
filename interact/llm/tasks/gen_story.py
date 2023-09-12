@@ -10,7 +10,6 @@ from interact.llm.hook import AIBeingHookAsync, AIBeingHook
 from interact.schema.chat import response
 from interact.schema.protocal import protocol
 
-
 class AIBeingStoryTask(AIBeingBaseTask):
     def  __init__(self):
         super().__init__(protocol.gen_story)
@@ -30,7 +29,7 @@ class AIBeingStoryTask(AIBeingBaseTask):
     def gen_story(self, prompt_chains: List[str], hook: AIBeingHook, temperature:float=0.9, model_name:str="msai"):
         hook.send_raw(response(protocol=protocol.gen_story_start, debug=""))
         self.chat_list = self.chat_list[1:]
-        for i in prompt_chains:
+        for _, i in enumerate(prompt_chains):
             self.chat_list.append(self.user_message(i))
             res = self.proxy(self.chat_list, None, temperature, False, model_name=model_name)
             self.chat_list.append(self.ai_message(res))
@@ -42,8 +41,6 @@ class AIBeingStoryTask(AIBeingBaseTask):
     @check_running
     async def async_generate(self, input_js, **kwargs) -> Any:
         hook = kwargs["hook"]
-        pt = input_js.get("pt")
-        assert pt == protocol.gen_story, "pt must be gen_story"
         theme = input_js.get("theme")
         prompts = input_js.get("prompts")
         temperature = input_js.get("temperature")
@@ -55,8 +52,6 @@ class AIBeingStoryTask(AIBeingBaseTask):
     @check_running
     def generate(self, input_js, **kwargs) -> Any:
         hook = kwargs["hook"]
-        pt = input_js.get("pt")
-        assert pt == protocol.gen_story, "pt must be gen_story"
         theme = input_js.get("theme")
         prompts = input_js.get("prompts")
         assert isinstance(prompts, list), "prompts must be list"

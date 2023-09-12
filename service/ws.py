@@ -47,7 +47,7 @@ class WSServer(object):
                 session = js.get("session_id", session_id)
                 task = sessions.get(session)
                 if not task:
-                    task = AIBeingBaseTask("unknown")
+                    task = AIBeingBaseTask()
                     logger.info("create new session: {}".format(session))
 
                 task = regen_task(task, js)
